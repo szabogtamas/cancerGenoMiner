@@ -341,6 +341,7 @@ class plotSurvival(nextflowProcess):
 
         ### Plot survival for every gene
         plt = plotting_tools.plt
+        plotting_tools.set_figure_rc()
         fig, axs = plt.subplots(plotrow, plotcol)
         axs = axs.flatten()    
         
@@ -360,7 +361,7 @@ class plotSurvival(nextflowProcess):
             stats.append(-1*np.log10(stat.p_value))
         ax = plotting_tools.legend_only(ax=axs[-1])
         
-        ### Plot distribution of gene expression
+        ### Create prognosis categories based pn survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
         df = ["gex_"+symbol for symbol in symbols]
         df = clinicals.loc[:, ['time'] + df]
@@ -370,6 +371,8 @@ class plotSurvival(nextflowProcess):
         df['prognosis'] = df['time'].apply(lambda x: 'poor' if x <= lowquart else "")
         df['prognosis'] = df['prognosis'].astype(str) + df['time'].apply(lambda x: 'good' if x >= highquart else "")
         df['prognosis'] = df['prognosis'].apply(lambda x: 'mild' if x == "" else x)
+
+        ### Plot distribution of gene expression
         fig, gex = plt.subplots(figsize = (7.2, 3.6))
         gex = plotting_tools.sns.boxplot(x='gene', y='gex', hue='prognosis', hue_order=['poor', 'mild', 'good'], dodge=True, data=df, whis=np.inf, color='white', linewidth=0.4, ax=gex)
         gex = plotting_tools.sns.stripplot(x='gene', y='gex', hue='prognosis', hue_order=['poor', 'mild', 'good'], dodge=True, data=df, ax=gex, size=1, jitter=0.3)
