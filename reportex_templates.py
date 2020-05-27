@@ -82,7 +82,7 @@ def general_report(
     if bibliography is None:
         bibliography = ('', '')
     else:
-        bibliography = ("\\addbibresource{" + os.path.realpath(bibliography) + "}", '\n    \\flushleft\n    \\leftskip=60pt\n    \\rightskip=60pt\n    \\printbibliography[title={Citations for data and tools}]')
+        bibliography = ("\\addbibresource{" + bibliography + "}", '\n    \\flushleft\n    \\leftskip=60pt\n    \\rightskip=60pt\n    \\printbibliography[title={Citations for data and tools}]')
 
     if pagetitles is None:
         pagetitles = dict()
@@ -190,7 +190,7 @@ def general_report(
     \\maketitle
     \\thispagestyle{fancy}
 
-    \\vspace*{-10pt}
+    \\vspace*{-60pt}
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
