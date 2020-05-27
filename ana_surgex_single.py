@@ -79,7 +79,7 @@ def create_pipeline(*,
             'slidesfile': 'figures.pptx', 
             'comments': comment_location, 
             'mpl_backend': "pgf", 
-        }
+        } 
     
     if main_kws is None:
         main_kws = dict()
@@ -100,12 +100,15 @@ def create_pipeline(*,
     ### Add processes to the Nextflow pipeline
     if nodes is None:
         nodes = [
-            getSurvival(inchannels=['cohorts', 'genes', 'genedict', 'survtab', 'drive_key'], outchannels=['survivals', 'gene_nd'], conda=conda),
+            fetchClinicalFile(inchannels=['survtab'], outchannels=['local_survtab'], conda=conda),
+            getSurvival(inchannels=['cohorts', 'genes', 'genedict', 'local_survtab'], outchannels=['survivals', 'gene_nd'], conda=conda),
             plotSurvival(inchannels=['survivals', 'plotcohorts', 'plotgenes', 'symdict', 'numplot', "mpl_backend"], outchannels=['plotnames', 'images', 'plots', 'stats', 'titles', 'notebooks'], conda=conda, capture=True),
             makeHeatmap(inchannels=['stat', 'heatmap_f'], outchannels=['heatmap', 'heatimage', 'cohort_order'], conda=conda),
-            pptFromFigures(),
-            getRefs(inchannels=['bibliography', 'drive_key'], outchannels=['bibtex']),
-            compileReport(inchannels=['plotsr', 'heatmap', 'ordered_cohorts', 'page_titles', 'comments', 'bibtex', 'report_title', 'author_name', 'lab_name'], outchannels=['reportex'], conda=conda),
+            pptFromFigures(conda=conda),
+            getRefs(inchannels=['bibliography', 'drive_key'], outchannels=['bibtex'], conda=conda),
+            compileReport(inchannels=['plotsr', 'heatmap', 'ordered_cohorts', 'page_titles', 'comments', 'bibtex', 'report_title', 'author_name', 'lab_name'], outchannels=['reportex', 'bibtex2'], conda=conda),
+            #getRefs(inchannels=['bibliography', 'drive_key'], outchannels=['bibtex'], conda=conda),
+            #compileReport(inchannels=['plotsr', 'heatmap', 'ordered_cohorts', 'page_titles', 'comments', 'bibtex', 'report_title', 'author_name', 'lab_name'], outchannels=['reportex'], conda=conda),
             pdfFromLatex(),
             ]
     
@@ -122,6 +125,62 @@ def create_pipeline(*,
 
 recipe = create_pipeline
 
+class fetchClinicalFile(nextflowProcess):
+    """
+    Nextflow process to execute the function below.
+    """
+
+    def dependencies(self):
+        return {
+            'imports': ['import connectDrive', 'from typing import Union', 'from cancerGenoMiner import par_examples'],
+            'inhouse_packages': [cgm_folder, intro_folder, drive_folder]
+        }
+
+    def channel_specifications(self):
+        return {
+            'survtab': ('val', 'survtab', 'survival_table', None, True),
+            'local_survtab': ('stdout', 'survival_table', None, None, False),
+        }
+    
+    def customize_features(self):
+        self.modified_kws = {
+            "outFile": (1, "-o", "--outFile", {"dest": "outFile", "help": "Location where results should be saved. If not specified, STDOUT will be used.",},),
+        }
+        return None
+
+    def process(self,
+        *,
+        fn: str = 'survival_table.tsv',
+        survival_table: Union[None, str] = None,
+        drive_key: str = par_examples.gdrive_secret,
+        ) -> str:
+
+        """
+        Download survival table from Google drive.
+
+        Parameters
+        ----------
+        survival_table
+            Manual curated survival data outside the scope of UCSC Xena.
+        drive_key
+            Location of the credential file for Google Drive access.
+        
+        Returns
+        -------
+        Manually curated clinical endpoints.
+        
+        """
+
+        if survival_table in ['None', None]:
+            return 'None'
+        else:
+            drive = connectDrive.io.login_to_drive(drive_key)
+            gd_projectFolderID, datasetDir = connectDrive.io.explore_drive_content(drive)
+            clinicals = survival_tools.curatedSurvival(survival_table, par_examples.pancan_sampletypes, drive, datasetDir)
+            clinicals.to_csv(fn, sep='\t')
+        return os.path.realpath(fn)
+
+
 class getSurvival(nextflowProcess):
     """
     Nextflow process to execute the function below.
@@ -135,7 +194,8 @@ class getSurvival(nextflowProcess):
 
     def directives(self):
         return {
-            'publishDir': "'../tables', mode: 'copy'"
+            'publishDir': "'../tables', mode: 'copy'",
+            'echo': "true"
         }
         
     def channel_pretreat(self):
@@ -161,8 +221,7 @@ class getSurvival(nextflowProcess):
             'genedict': ('each', '*genedict', 'genedict', None, False),
             'genes': ('val', 'genes', 'genes', None, False),
             'cohorts': ('val', 'cohort', 'cohort', None, True),
-            'survtab': ('val', 'survtab', 'survival_table', None, True),
-            'drive_key': ('val', 'drive_key', 'drive_key', None, True),
+            'survtab': ('each', 'survtab', 'survival_table', None, True),
             'survivals': ('file', '"${cohort}_data.tsv"', 'outFile', None, False),
             'gene_nd': ('file', "'genedict.tsv'", 'gd', None, False),
         }
@@ -183,7 +242,6 @@ class getSurvival(nextflowProcess):
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
         survival_table: Union[None, str] = None,
-        drive_key: str = par_examples.gdrive_secret,
         
         ) -> Tuple[gex_tools.pd.DataFrame, str]:
 
@@ -206,8 +264,6 @@ class getSurvival(nextflowProcess):
             A table mapping gene names to gene symbols.
         survival_table
             Manual curated survival data outside the scope of UCSC Xena.
-        drive_key
-            Location of the credential file for Google Drive access.
         
         Returns
         -------
@@ -229,9 +285,7 @@ class getSurvival(nextflowProcess):
             clinicals = clinicals.loc[clinicals['sample_type.samples'].isin(gdc_features.gdc_any_tumor),:]
             clinicals = survival_tools.fix_gdc_survival_categories(clinicals, xena_hub, dataset)
         else:
-            drive = connectDrive.io.login_to_drive(drive_key)
-            gd_projectFolderID, datasetDir = connectDrive.io.explore_drive_content(drive)
-            clinicals = survival_tools.curatedSurvival(survival_table, par_examples.pancan_sampletypes, drive, datasetDir)
+            clinicals = survival_tools.pd.from_csv(survival_table, sep='\t')
         clinicals = gex_tools.add_gene_expression_by_genes(symbols, clinicals, xena_hub, gex_dataset)
         return clinicals, gd
 
@@ -250,6 +304,7 @@ class plotSurvival(nextflowProcess):
     def directives(self):
         return {
             'publishDir': "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
+            'echo': 'true'
         }
     def channel_pretreat(self):
         return [
@@ -532,6 +587,7 @@ class pptFromFigures(nextflowProcess):
     def directives(self):
         return {
             'publishDir': "'../', mode: 'copy'",
+            'executor': "'local'",
         }
 
     def channel_pretreat(self):
@@ -622,6 +678,7 @@ class compileReport(nextflowProcess):
             'comments': ('val', '*comments', 'method_comments', None, True),
             'ordered_cohorts': ('val', 'cohort_order', 'cohort_order', None, False),
             'reportex':  ('file', "'report.tex'", 'outFile', None, False),
+            'bibtex2':  ('file', '"c_${bibtex.getName()}"', None, None, False),
         }
 
     def process(self,
@@ -686,8 +743,15 @@ class compileReport(nextflowProcess):
             textable = f.read()
         with open(method_comments, 'r') as f:
             method_comments = f.read()
-            
-        tex = reportex_templates.general_report(report_title=report_title, author_name=author_name, lab_name=lab_name, heat_table=textable, left_tree=left, bottom_tree=bottom, plot_list=plotlist, pagetitles=pagetitles, cohort_order=cohort_order, method_comments=method_comments, bibliography=bibliography)
+        
+        cbib = os.path.realpath(bibliography)
+        bibliography='c_' + os.path.basename(bibliography)
+        with open(cbib, 'r') as f:
+            bib = f.read()
+        with open(cbib, 'w') as f:
+            f.write(bibliography)
+
+        tex = reportex_templates.general_report(report_title=report_title, author_name=author_name, lab_name=lab_name, heat_table=textable, left_tree=left, bottom_tree=bottom, plot_list=plotlist, pagetitles=pagetitles, cohort_order=cohort_order, method_comments=method_comments, bibliography=cbib)#, bibliography=bibliography)
         return tex
 
 
@@ -704,7 +768,8 @@ class pdfFromLatex(nextflowProcess):
     def customize_features(self):
         self.manualDoc = "Convert the LaTeX format report into pdf.\n"
         self.inputs = [
-            'file reportex'
+            'file reportex',
+            'file bibtex2'
         ]
         self.outputs = [
             'file("*.pdf")'
