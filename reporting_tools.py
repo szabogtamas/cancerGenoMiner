@@ -210,39 +210,6 @@ def latex_heatmap(
     for i in range(len(tns)):
         row = ptable.iloc[i, :]
         t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(plot_extent*i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    for i in range(len(tns)):
-        row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
     t += '\\end{tabular}'
     return t
 
@@ -267,7 +234,7 @@ def cellPainter(
 
     """
     
-    c = cm(-0.2*(x+10**0.05))
+    c = cm(0.12*(x+5**0.5))
     return ','.join([str(r) for r in c[:3]])
 
 def textPainter(
@@ -291,7 +258,7 @@ def textPainter(
 
     """
     
-    c = cm(1-(-0.2*(x+10**0.05)))
+    c = cm(1-(0.12*(x+5**0.5)))
     return ','.join([str(r) for r in c[:3]])
 
 def main():
