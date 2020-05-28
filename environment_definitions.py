@@ -13,7 +13,7 @@ __name__, __package__, invoked_directly = introSpect.cmdSupport(
 )
 hint = introSpect.hint
 
-latex_container = 'docker://blang/latex:ctanfull'
+latex_container = "docker://blang/latex:ctanfull"
 
 environment = """name: survivor
 channels:
@@ -187,6 +187,7 @@ dependencies:
   - pip:
     - xenapython==1.0.10
 """
+
 
 def recipe(*, verbose: bool = False,) -> dict:
 
