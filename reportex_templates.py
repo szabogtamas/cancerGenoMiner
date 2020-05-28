@@ -205,12 +205,12 @@ def general_report(
     \\maketitle
     \\thispagestyle{fancy}
 
-    \vspace*{-90pt}
-    \begin{table}[!ht]
-    \begin{subtable}{0.1\textwidth}
-        \begin{flushright}
-            \vspace*{30pt}
-            \hspace*{20pt}
+    \\vspace*{-90pt}
+    \\begin{table}[!ht]
+    \\begin{subtable}{0.1\textwidth}
+        \\begin{flushright}
+            \\vspace*{30pt}
+            \\hspace*{20pt}
             \\input{"""
         + left_tree
         + """}
@@ -223,9 +223,9 @@ def general_report(
         + heat_table
         + """
     
-    \end{subtable}
-    \begin{subtable}{\textwidth}
-        \vspace*{-110pt}
+    \\end{subtable}
+    \\begin{subtable}{\textwidth}
+        \\vspace*{-110pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
         + """}
