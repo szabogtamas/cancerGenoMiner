@@ -31,10 +31,14 @@ prognosis_genecodes = {
     "Estrogen receptor": "ESR1",
     "Progesterone receptor": "PGR",
 }
-ptable = {'cohort': ['TCGA-LIHC', 'TCGA-BRCA'], 'TP53': [0.48725, 0.435489], 'MKI67': [0.1292, 3.375975]}
+ptable = {
+    "cohort": ["TCGA-LIHC", "TCGA-BRCA"],
+    "TP53": [0.48725, 0.435489],
+    "MKI67": [0.1292, 3.375975],
+}
 curated_survivals = "clinical_endpoints.tsv"
 pancan_sampletypes = "PANCAN_xena_sample_types.tsv"
-gdrive_secret = os.path.expanduser("~")+'/.key'
+gdrive_secret = os.path.expanduser("~") + "/.key"
 
 
 def recipe(*, verbose: bool = True,) -> dict:
