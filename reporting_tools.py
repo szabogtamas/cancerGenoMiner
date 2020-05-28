@@ -21,6 +21,7 @@ from matplotlib import colors as mplCols
 from typing import Union
 from . import par_examples, plotting_tools
 
+
 def recipe(*, table: Union[None, str] = None, verbose: bool = True,) -> dict:
 
     """
@@ -43,7 +44,7 @@ def recipe(*, table: Union[None, str] = None, verbose: bool = True,) -> dict:
         ptable = pd.DataFrame.from_dict(par_examples.ptable)
     else:
         ptable = get_ptable(table)
-    ptable = ptable.set_index('cohort')
+    ptable = ptable.set_index("cohort")
     hint(verbose, "The -log10 p-values:\n", ptable.head())
 
     ### Create linkage matrix and reorder the table based on hierarchy
@@ -61,11 +62,7 @@ def recipe(*, table: Union[None, str] = None, verbose: bool = True,) -> dict:
     return image_hm
 
 
-def get_ptable(
-    fn: str,
-    *,
-    idx: str = 'cohort',
-    ) -> pd.DataFrame:
+def get_ptable(fn: str, *, idx: str = "cohort",) -> pd.DataFrame:
 
     """
     Shortcut to read the table of p-values into Pandas.
@@ -81,17 +78,18 @@ def get_ptable(
     -------
     Data frame with p-values.
     """
-    
-    ptable = pd.read_csv(fn, sep='\t')
+
+    ptable = pd.read_csv(fn, sep="\t")
     ptable = ptable.set_index(idx)
     return ptable
+
 
 def heatmap_image(
     ptable: pd.DataFrame,
     *,
     row_linkage: Union[None, str] = None,
     col_linkage: Union[None, str] = None,
-    ) -> sns.matrix.ClusterGrid:
+) -> sns.matrix.ClusterGrid:
 
     """
     Shortcut to ctreate a clustered heatmap with Seaborn.
@@ -109,15 +107,22 @@ def heatmap_image(
     -------
     Data frame with p-values.
     """
-    
-    g = sns.clustermap(ptable, row_linkage=row_linkage, col_linkage=col_linkage, method='single', figsize=(8, 5.8),  xticklabels=True,  yticklabels=True)
+
+    g = sns.clustermap(
+        ptable,
+        row_linkage=row_linkage,
+        col_linkage=col_linkage,
+        method="single",
+        figsize=(8, 5.8),
+        xticklabels=True,
+        yticklabels=True,
+    )
     return g
 
+
 def tree_linkages(
-    ptable: pd.DataFrame,
-    *,
-    method: str = 'single',
-    ) -> sns.matrix.ClusterGrid:
+    ptable: pd.DataFrame, *, method: str = "single",
+) -> sns.matrix.ClusterGrid:
 
     """
     Shortcut to ctreate a clustered heatmap with Seaborn.
@@ -134,15 +139,20 @@ def tree_linkages(
     Linkage matrices for rows and columns.
     """
 
-    row_linkage = sci.cluster.hierarchy.linkage(sci.spatial.distance.pdist(ptable), method=method)
-    col_linkage = sci.cluster.hierarchy.linkage(sci.spatial.distance.pdist(ptable.T), method=method)
+    row_linkage = sci.cluster.hierarchy.linkage(
+        sci.spatial.distance.pdist(ptable), method=method
+    )
+    col_linkage = sci.cluster.hierarchy.linkage(
+        sci.spatial.distance.pdist(ptable.T), method=method
+    )
     return row_linkage, col_linkage
+
 
 def linkorder_table(
     ptable: pd.DataFrame,
     row_linkage: Union[None, str] = None,
     col_linkage: Union[None, str] = None,
-    ) -> sns.matrix.ClusterGrid:
+) -> sns.matrix.ClusterGrid:
 
     """
     Reorder the table based on hierarchical clustering.
@@ -160,29 +170,42 @@ def linkorder_table(
     -------
     Reordered data frame.
     """
-    
+
     ngenes = ptable.columns.values.tolist()
     tns = ptable.index.values.tolist()
 
-    fig, ax1 = plotting_tools.plt.subplots(figsize=(0.3, len(tns)*0.263))
-    row_order = sci.cluster.hierarchy.dendrogram(row_linkage, orientation='left', ax=ax1, link_color_func=lambda k: 'k', labels=tns)
-    ax1.axis('off')
+    fig, ax1 = plotting_tools.plt.subplots(figsize=(0.3, len(tns) * 0.263))
+    row_order = sci.cluster.hierarchy.dendrogram(
+        row_linkage,
+        orientation="left",
+        ax=ax1,
+        link_color_func=lambda k: "k",
+        labels=tns,
+    )
+    ax1.axis("off")
 
-    fig, ax2 = plotting_tools.plt.subplots(figsize=(len(ngenes)*0.35, 0.3))
-    col_order = sci.cluster.hierarchy.dendrogram(col_linkage, orientation='bottom', ax=ax2, link_color_func=lambda k: 'k', labels=ngenes)
-    ax2.axis('off')
+    fig, ax2 = plotting_tools.plt.subplots(figsize=(len(ngenes) * 0.35, 0.3))
+    col_order = sci.cluster.hierarchy.dendrogram(
+        col_linkage,
+        orientation="bottom",
+        ax=ax2,
+        link_color_func=lambda k: "k",
+        labels=ngenes,
+    )
+    ax2.axis("off")
 
-    ptable = ptable.iloc[row_order['leaves'],col_order['leaves']]
+    ptable = ptable.iloc[row_order["leaves"], col_order["leaves"]]
 
     return ptable, ax1, ax2
+
 
 def latex_heatmap(
     ptable: pd.DataFrame,
     *,
-    rCm: mplCols.LinearSegmentedColormap = plotting_tools.plt.get_cmap('Reds'),
-    bCm: mplCols.LinearSegmentedColormap = plotting_tools.plt.get_cmap('Blues'),
+    rCm: mplCols.LinearSegmentedColormap = plotting_tools.plt.get_cmap("Reds"),
+    bCm: mplCols.LinearSegmentedColormap = plotting_tools.plt.get_cmap("Blues"),
     plot_extent: int = 1,
-    ) -> str:
+) -> str:
 
     """
     Reorder the table based on hierarchical clustering.
@@ -202,21 +225,37 @@ def latex_heatmap(
     -------
     LaTeX string for the heatmap table.
     """
-    
+
     ngenes = ptable.columns.values.tolist()
     tns = ptable.index.values.tolist()
-    t = '\\begin{tabular}{' + ' | '.join(['c'] * (1+len(ngenes))) + '}\n'
-    t += ' & ' + ' & '.join(['\\rotatebox{90}{' + x +'}' for x in ngenes]) + '\\\\ \n'
+    t = "\\begin{tabular}{" + " | ".join(["c"] * (1 + len(ngenes))) + "}\n"
+    t += " & " + " & ".join(["\\rotatebox{90}{" + x + "}" for x in ngenes]) + "\\\\ \n"
     for i in range(len(tns)):
         row = ptable.iloc[i, :]
-        t += tns[i] + ' & ' + ' & '.join(['\\color[rgb]{'+textPainter(x, bCm)+'} \\cellcolor[rgb]{'+cellPainter(x, rCm)+'} \\hyperlink{page.'+str(plot_extent*i+2)+'}{'+'{:0.2f}'.format(1*x) + '}' for x in row]) + '\\\\ \n'
-    t += '\\end{tabular}'
+        t += (
+            tns[i]
+            + " & "
+            + " & ".join(
+                [
+                    "\\color[rgb]{"
+                    + textPainter(x, bCm)
+                    + "} \\cellcolor[rgb]{"
+                    + cellPainter(x, rCm)
+                    + "} \\hyperlink{page."
+                    + str(plot_extent * i + 2)
+                    + "}{"
+                    + "{:0.2f}".format(1 * x)
+                    + "}"
+                    for x in row
+                ]
+            )
+            + "\\\\ \n"
+        )
+    t += "\\end{tabular}"
     return t
 
-def cellPainter(
-    x: float,
-    cm: mplCols.LinearSegmentedColormap,
-    ) -> str:
+
+def cellPainter(x: float, cm: mplCols.LinearSegmentedColormap,) -> str:
 
     """
     Helper function producing a scaled background color.
@@ -233,14 +272,12 @@ def cellPainter(
     RGB color string.
 
     """
-    
-    c = cm(0.12*(x+5**0.5))
-    return ','.join([str(r) for r in c[:3]])
 
-def textPainter(
-    x: float,
-    cm: mplCols.LinearSegmentedColormap,
-    ) -> str:
+    c = cm(0.12 * (x + 5 ** 0.5))
+    return ",".join([str(r) for r in c[:3]])
+
+
+def textPainter(x: float, cm: mplCols.LinearSegmentedColormap,) -> str:
 
     """
     Helper function producing a scaled text color.
@@ -257,9 +294,10 @@ def textPainter(
     RGB color string.
 
     """
-    
-    c = cm(1-(0.12*(x+5**0.5)))
-    return ','.join([str(r) for r in c[:3]])
+
+    c = cm(1 - (0.12 * (x + 5 ** 0.5)))
+    return ",".join([str(r) for r in c[:3]])
+
 
 def main():
 
