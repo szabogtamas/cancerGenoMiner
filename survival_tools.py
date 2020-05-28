@@ -18,7 +18,9 @@ import pandas as pd
 from lifelines import statistics, KaplanMeierFitter
 from typing import Union, Tuple, List, Sequence
 from . import par_examples, gdc_features, xena_tools, gex_tools, plotting_tools
+
 plt = plotting_tools.plt
+
 
 def recipe(
     *,
@@ -81,7 +83,9 @@ def recipe(
     hint(verbose, "Data in the curated survival table:\n", clinicals.head())
 
     ### Add gene expression to the table
-    clinicals = gex_tools.add_gene_expression_by_genes([gene], clinicals, xena_hub, gex_dataset)
+    clinicals = gex_tools.add_gene_expression_by_genes(
+        [gene], clinicals, xena_hub, gex_dataset
+    )
     hint(
         verbose,
         "Gene expression in",
@@ -95,11 +99,15 @@ def recipe(
     hint(verbose, "Gene expression categories based on the median:\n", clinicals.head())
 
     ### Create a mask that defines our groups
-    mask = (clinicals["cat_"+gene] == 'low')
+    mask = clinicals["cat_" + gene] == "low"
 
     ### Calculate logRank statistics to compare survival in the two groups
-    stat = logRankSurvival(clinicals['time'], clinicals['event'], mask)
-    hint(verbose, "The probability for the two groups to have the same survival:\n", stat.p_value)
+    stat = logRankSurvival(clinicals["time"], clinicals["event"], mask)
+    hint(
+        verbose,
+        "The probability for the two groups to have the same survival:\n",
+        stat.p_value,
+    )
 
     ### Plot survival
     plotting_tools.set_figure_rc()
@@ -107,20 +115,21 @@ def recipe(
 
     return ax
 
+
 def plotKMpair(
     df: pd.DataFrame,
     mask: pd.Series,
     *,
     alternative_mask: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
-    labels: Union[None, Tuple[str, str]] = ('low expression', 'high expression'),
-    xlabel: str = 'Overall survival (months)',
-    title: str = '',
+    labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
+    xlabel: str = "Overall survival (months)",
+    title: str = "",
     calculate_stat: bool = True,
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
-    ) -> plt.Axes:
-        
+) -> plt.Axes:
+
     """
     Plots two Kaplan-Meier curves to compare survival in two groups.
 
@@ -152,30 +161,37 @@ def plotKMpair(
     -------
     The matplotlib axis object with the Kaplan-Meier curves.
     """
-    
+
     if ax is None:
         fig, ax = plt.subplots()
     if alternative_mask is None:
         alternative_mask = ~mask
     l1, l2 = labels
 
-    T = df['time']
-    E = df['event']
+    T = df["time"]
+    E = df["event"]
     kmf = KaplanMeierFitter()
-    kmf.fit(T[mask], E[mask], timeline=timeline, label=l1 + '(n=' + str(len(E[mask])) + ')')
+    kmf.fit(
+        T[mask], E[mask], timeline=timeline, label=l1 + "(n=" + str(len(E[mask])) + ")"
+    )
     ax = kmf.plot(ax=ax, legend=make_legend)
-    kmf.fit(T[alternative_mask], E[alternative_mask], timeline=timeline, label=l2 + '(n=' + str(len(E[alternative_mask])) + ')')
+    kmf.fit(
+        T[alternative_mask],
+        E[alternative_mask],
+        timeline=timeline,
+        label=l2 + "(n=" + str(len(E[alternative_mask])) + ")",
+    )
     ax = kmf.plot(ax=ax, legend=make_legend)
     if calculate_stat:
         s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
-        title += '\n(p={:1.6f})'.format(s.p_value)
+        title += "\n(p={:1.6f})".format(s.p_value)
     ax.set_title(title, y=0.5)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if make_legend:
-        ax.legend(title='', loc='lower left', frameon=False)
+        ax.legend(title="", loc="lower left", frameon=False)
     else:
         try:
             ax.get_legend().remove()
@@ -183,20 +199,21 @@ def plotKMpair(
             pass
     return ax
 
+
 def curatedSurvival(
     cfn: str,
     sfn: str,
     drive: pd.Series,
     drivedir: dict,
     *,
-    survivaltype: Tuple[str, str] = ('OS', 'OS.time'),
-    clinical_indexcol: str = 'bcr_patient_barcode',
-    sample_indexcol: str = 'sample',
-    sampletypecol: str = 'sample_type',
+    survivaltype: Tuple[str, str] = ("OS", "OS.time"),
+    clinical_indexcol: str = "bcr_patient_barcode",
+    sample_indexcol: str = "sample",
+    sampletypecol: str = "sample_type",
     sampletype: Union[None, List] = gdc_features.gdc_any_tumor,
     timefactor: int = 30,
-    ) -> pd.DataFrame:
-        
+) -> pd.DataFrame:
+
     """
     Read clinical information from the dataset curated by Liu et al. in a 2018 Cell
     paper (https://www.ncbi.nlm.nih.gov/pubmed/29625055). Additionally, filter for tumor
@@ -233,29 +250,34 @@ def curatedSurvival(
 
     clinicals = connectDrive.io.read_gd_table(drive, cfn, drivedir)
     clinicals = clinicals.set_index(clinical_indexcol)
-    clinicals['event'] = clinicals[survivaltype[0]]
-    clinicals['time'] = clinicals[survivaltype[1]]
-    clinicals = clinicals.loc[clinicals['time'] != 'NaN', :]
-    clinicals = clinicals.loc[clinicals['time'].notna(), :]
-    clinicals = clinicals.loc[clinicals['event'] != 'NaN', :]
-    clinicals = clinicals.loc[clinicals['event'].notna(), :]
-    clinicals['time'] = clinicals['time'].astype(float)
-    clinicals['time'] = clinicals['time']/timefactor
-    clinicals = clinicals.iloc[:,1:]
+    clinicals["event"] = clinicals[survivaltype[0]]
+    clinicals["time"] = clinicals[survivaltype[1]]
+    clinicals = clinicals.loc[clinicals["time"] != "NaN", :]
+    clinicals = clinicals.loc[clinicals["time"].notna(), :]
+    clinicals = clinicals.loc[clinicals["event"] != "NaN", :]
+    clinicals = clinicals.loc[clinicals["event"].notna(), :]
+    clinicals["time"] = clinicals["time"].astype(float)
+    clinicals["time"] = clinicals["time"] / timefactor
+    clinicals = clinicals.iloc[:, 1:]
     saved_columns = clinicals.columns.values.tolist()
-    clinicals['tmp_col'] = clinicals.values.tolist()
-    clinicals = clinicals.loc[:, 'tmp_col'].to_dict()
+    clinicals["tmp_col"] = clinicals.values.tolist()
+    clinicals = clinicals.loc[:, "tmp_col"].to_dict()
     sampleTypes = connectDrive.io.read_gd_table(drive, sfn, drivedir)
     sampleTypes = sampleTypes[~pd.isnull(sampleTypes[sample_indexcol])]
-    sampleTypes['patient'] = sampleTypes[sample_indexcol].apply(lambda x: '-'.join(x.split('-')[:3]))
+    sampleTypes["patient"] = sampleTypes[sample_indexcol].apply(
+        lambda x: "-".join(x.split("-")[:3])
+    )
     if sampletype is not None:
-        sampleTypes = sampleTypes.loc[sampleTypes[sampletypecol].isin(sampletype),:]
-    sampleTypes = sampleTypes.loc[sampleTypes['patient'].isin(clinicals.keys()),:]
-    sampleTypes['tmp_col'] = sampleTypes['patient'].map(clinicals)
-    sampleTypes[saved_columns] = pd.DataFrame(sampleTypes['tmp_col'].tolist(), index=sampleTypes.index)
+        sampleTypes = sampleTypes.loc[sampleTypes[sampletypecol].isin(sampletype), :]
+    sampleTypes = sampleTypes.loc[sampleTypes["patient"].isin(clinicals.keys()), :]
+    sampleTypes["tmp_col"] = sampleTypes["patient"].map(clinicals)
+    sampleTypes[saved_columns] = pd.DataFrame(
+        sampleTypes["tmp_col"].tolist(), index=sampleTypes.index
+    )
     sampleTypes = sampleTypes.set_index(sample_indexcol)
-    sampleTypes = sampleTypes.loc[:,saved_columns+[sampletypecol, 'patient']]
+    sampleTypes = sampleTypes.loc[:, saved_columns + [sampletypecol, "patient"]]
     return sampleTypes
+
 
 def logRankSurvival(
     T: pd.Series,
@@ -263,8 +285,8 @@ def logRankSurvival(
     mask: pd.Series,
     *,
     alternative_mask: Union[None, pd.Series] = None,
-    ) -> None:
-        
+) -> None:
+
     """
     Calculated a logRank p-value of survival in two conditions
     being different.
@@ -285,25 +307,31 @@ def logRankSurvival(
     -------
     A logrank statistics result.
     """
-    
+
     if alternative_mask is None:
         alternative_mask = ~mask
-    return statistics.logrank_test(T[mask], T[alternative_mask], event_observed_A=E[mask], event_observed_B=E[alternative_mask])
+    return statistics.logrank_test(
+        T[mask],
+        T[alternative_mask],
+        event_observed_A=E[mask],
+        event_observed_B=E[alternative_mask],
+    )
+
 
 def fix_gdc_survival_categories(
     clinicals: pd.DataFrame,
     xena_hub: str,
     ds: str,
     *,
-    leveldict: dict = {'NaN': 0},
-    renamedict: Union[None, dict] = {'Dead': 1},
+    leveldict: dict = {"NaN": 0},
+    renamedict: Union[None, dict] = {"Dead": 1},
     renameremain: Union[None, str, int, float] = 0,
-    survcol: str = 'vital_status.demographic',
-    timecol: str = 'days_to_death.demographic',
-    alttimecol: str = 'days_to_last_follow_up.diagnoses',
+    survcol: str = "vital_status.demographic",
+    timecol: str = "days_to_death.demographic",
+    alttimecol: str = "days_to_last_follow_up.diagnoses",
     timefactor: int = 30,
-    ) -> pd.DataFrame:
-        
+) -> pd.DataFrame:
+
     """
     Recodes survival in 0-1 events and time scaled by given factor (months by default).
     Drops rows where either time or event information is missing.
@@ -338,13 +366,23 @@ def fix_gdc_survival_categories(
     Dataframe with time and event columns, dropping missing value rows.
     """
 
-    clinicals = xena_tools.fix_phenotype_factorlevels(clinicals, xena_hub, ds, survcol, leveldict=leveldict, renamedict=renamedict, renameremain=renameremain)
-    clinicals['event'] = clinicals[survcol]
-    clinicals = clinicals.loc[clinicals['event'] != 'NaN', :]
-    clinicals['time'] = clinicals.apply(lambda x: x[timecol] if x[alttimecol] != 'NaN' else x[timecol], axis=1)
-    clinicals = clinicals.loc[clinicals['time'] != 'NaN', :]
-    clinicals['time'] = clinicals['time'].astype(float)
-    clinicals['time'] = clinicals['time']/timefactor
+    clinicals = xena_tools.fix_phenotype_factorlevels(
+        clinicals,
+        xena_hub,
+        ds,
+        survcol,
+        leveldict=leveldict,
+        renamedict=renamedict,
+        renameremain=renameremain,
+    )
+    clinicals["event"] = clinicals[survcol]
+    clinicals = clinicals.loc[clinicals["event"] != "NaN", :]
+    clinicals["time"] = clinicals.apply(
+        lambda x: x[timecol] if x[alttimecol] != "NaN" else x[timecol], axis=1
+    )
+    clinicals = clinicals.loc[clinicals["time"] != "NaN", :]
+    clinicals["time"] = clinicals["time"].astype(float)
+    clinicals["time"] = clinicals["time"] / timefactor
     return clinicals
 
 
