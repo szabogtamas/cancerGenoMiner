@@ -8,17 +8,20 @@ sys.path.append(
 )  # developmental hack, remove later!
 import introSpect
 
-request_for_special_plotting_backend = os.environ.get('MPLBACK', None)
+request_for_special_plotting_backend = os.environ.get("MPLBACK", None)
 __name__, __package__, invoked_directly = introSpect.cmdSupport(
     __name__, __package__, __file__
 )
 hint = introSpect.hint
 
 import matplotlib
-if request_for_special_plotting_backend is not None: matplotlib.use(request_for_special_plotting_backend)
+
+if request_for_special_plotting_backend is not None:
+    matplotlib.use(request_for_special_plotting_backend)
 from matplotlib import pyplot as plt
 import seaborn as sns
 from typing import Union, Tuple
+
 
 def recipe(
     *,
@@ -62,14 +65,14 @@ def recipe(
     ### Make a plot with legend only
     legend_only()
     return style_kws
-    
+
 
 def legend_only(
     *,
-    labels: Union[None, Tuple[str, str]] = ('low expression', 'high expression'),
+    labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
     ax: Union[None, plt.Axes] = None,
-    ) -> plt.Axes:
-        
+) -> plt.Axes:
+
     """
     Creates an empyt plot with the legend only.
 
@@ -84,17 +87,18 @@ def legend_only(
     -------
     The matplotlib axis object with the legend.
     """
-    
+
     if ax is None:
         fig, ax = plt.subplots()
-        
+
     ax.plot(range(-4, -1), range(-4, -1), label=labels[0])
     ax.plot(range(-4, -1), range(-4, -1), label=labels[1])
     ax.set_xlim(0, 5)
     ax.set_ylim(0, 5)
-    ax.axis('off')
-    ax.legend(title='', loc='upper left', frameon=False)
+    ax.axis("off")
+    ax.legend(title="", loc="upper left", frameon=False)
     return ax
+
 
 def set_figure_rc(
     *,
@@ -128,7 +132,7 @@ def set_figure_rc(
     if fontsizes is None:
         fontsizes = dict()
     _fontsizes = fontsizes.copy()
-    fontsizes = {"SMALL_SIZE": 6, "MEDIUM_SIZE": 8, "BIGGER_SIZE": 9}
+    fontsizes = {"SMALL_SIZE": 6, "MEDIUM_SIZE": 7, "BIGGER_SIZE": 8}
     fontsizes.update(_fontsizes)
 
     default_style = {
@@ -138,7 +142,7 @@ def set_figure_rc(
         "figure.subplot.wspace": 0.3,
         "figure.max_open_warning": -1,
         "figure.dpi": 600,
-        "axes.labelpad": -0.15*fontsizes["SMALL_SIZE"],
+        "axes.labelpad": -0.15 * fontsizes["SMALL_SIZE"],
         "figure.titlesize": fontsizes["BIGGER_SIZE"],
         "axes.titlesize": fontsizes["MEDIUM_SIZE"],
         "axes.labelsize": fontsizes["SMALL_SIZE"],
@@ -149,17 +153,17 @@ def set_figure_rc(
     }
 
     pgf_style = {
-        'font.family': 'serif',
-        'text.usetex': True,
-        'pgf.rcfonts': False,
+        "font.family": "serif",
+        "text.usetex": True,
+        "pgf.rcfonts": False,
     }
 
-    if os.environ.get('MPLBACK', None) == "pgf":
+    if os.environ.get("MPLBACK", None) == "pgf":
         print("Plotting backend seems to be PGF, adding adequate keywords to rcParams")
         default_style.update(pgf_style)
 
     if figsize is None:
-        #figsize = (6.4, 4.8)
+        # figsize = (6.4, 4.8)
         figsize = (7.2, 5.4)
     default_style["figure.figsize"] = figsize
 
@@ -201,6 +205,7 @@ def main():
     mainFunction.eval()
     mainFunction.save()
     return
+
 
 __doc__ = recipe.__doc__
 if invoked_directly:
