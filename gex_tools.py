@@ -66,13 +66,13 @@ def recipe(
             hint(verbose, g, n, probedict[n])
         else:
             hint(verbose, g, n, "not found")
-    
+
     ### Test if every gene could be mapped correctly
     unmapped = check_probedict(genes, probedict, gene_symbols=gene_symbols)
     if len(unmapped) < 1:
-        hint(verbose, 'All genes could be mapped to probes.')
+        hint(verbose, "All genes could be mapped to probes.")
     else:
-        hint(verbose, 'Following genes could not be mapped:\n', unmapped)
+        hint(verbose, "Following genes could not be mapped:\n", unmapped)
 
     ### Search for a specific ENSEMBL ID in the mapping
     hint(verbose, probes.loc[probes["id"].str.contains("ENSG00000082175"), :])
@@ -307,14 +307,21 @@ def add_gene_expression_by_genes(
     )
     for i in range(len(target_genes)):
         colname = colprefix + target_genes[i]
+        if len(expression_matrix[i]["scores"][0]) < 1:
+            print(
+                gene,
+                "not found. Are you sure you provided the gene symbol corresponding to the genome version?",
+            )
+        else:
+            clinicals[colname] = expression_matrix[i]["scores"][0]
         clinicals[colname] = expression_matrix[i]["scores"][0]
-    clinicals = clinicals.loc[clinicals[colname] != 'NaN']
+    clinicals = clinicals.loc[clinicals[colname] != "NaN"]
     return clinicals
 
 
 def check_probedict(
     genes: Sequence, genemap: str, *, gene_symbols: Union[None, dict] = None,
-    ) -> dict:
+) -> dict:
 
     """
     Check if genes could be mapped to probes. List unmapped genes.
@@ -336,7 +343,7 @@ def check_probedict(
 
     if gene_symbols is None:
         gene_symbols = dict()
-    
+
     unmapped = []
     for g in genes:
         if g in gene_symbols:
@@ -347,6 +354,7 @@ def check_probedict(
             unmapped.append(n)
 
     return unmapped
+
 
 def parse_gene_mapping(
     genemap: str, *, probecol: str = "id", genecol: str = "gene",
@@ -373,12 +381,8 @@ def parse_gene_mapping(
     genedict = genedict.loc[:, probecol].to_dict()
     return genedict
 
-def map_genenames(
-    genes: str,
-    genedictfile: str, 
-    *,
-    idx: str = "name",
-) -> list:
+
+def map_genenames(genes: str, genedictfile: str, *, idx: str = "name",) -> list:
 
     """
     Maps between gene names and gene symbols.
@@ -399,13 +403,13 @@ def map_genenames(
 
     if genedictfile is None:
         return genes
-    genedict = pd.read_csv(genedictfile, sep='\t', names=['name', 'symbol'])
+    genedict = pd.read_csv(genedictfile, sep="\t", names=["name", "symbol"])
     genedict = genedict.set_index(idx)
-    genedict = genedict.T.to_dict('records')
+    genedict = genedict.T.to_dict("records")
     genedict = genedict[0]
     ngenes = []
     for gene in genes:
-        gene = gene.replace('"', '')
+        gene = gene.replace('"', "")
         if gene in genedict:
             ngenes.append(genedict[gene])
         else:
