@@ -12,4 +12,5 @@ for module in os.listdir(homefolder):
     if module == "__init__.py" or module[-3:] != ".py":
         continue
     __import__(module[:-3], globals(), locals(), level=1)
+
 del module

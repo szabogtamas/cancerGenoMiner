@@ -224,13 +224,13 @@ def general_report(
         + """
     
     \\end{subtable}
-    \\begin{subtable}{\textwidth}
+    \\begin{subtable}{\\textwidth}
         \\vspace*{-110pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
         + """}
-    \end{subtable}
-    \end{table}
+    \\end{subtable}
+    \\end{table}
 
     \\vspace*{-30pt}
     \\begin{center}

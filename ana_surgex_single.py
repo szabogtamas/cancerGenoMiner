@@ -832,7 +832,6 @@ class pptFromFigures(nextflowProcess):
     def directives(self):
         return {
             "publishDir": "'../', mode: 'copy'",
-            "executor": "'local'",
         }
 
     def channel_pretreat(self):
