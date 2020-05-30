@@ -207,9 +207,9 @@ def general_report(
 
     \\vspace*{-90pt}
     \\begin{table}[!ht]
-    \\begin{subtable}{0.1\textwidth}
+    \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
-            \\vspace*{30pt}
+            \\vspace*{50pt}
             \\hspace*{20pt}
             \\input{"""
         + left_tree

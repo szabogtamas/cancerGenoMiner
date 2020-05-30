@@ -174,7 +174,7 @@ def linkorder_table(
     ngenes = ptable.columns.values.tolist()
     tns = ptable.index.values.tolist()
 
-    fig, ax1 = plotting_tools.plt.subplots(figsize=(0.3, len(tns) * 0.263))
+    fig, ax1 = plotting_tools.plt.subplots(figsize=(0.3, len(tns) * 0.26))
     row_order = sci.cluster.hierarchy.dendrogram(
         row_linkage,
         orientation="left",
