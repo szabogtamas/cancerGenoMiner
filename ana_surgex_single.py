@@ -90,6 +90,7 @@ def create_pipeline(
         "slidesfile": "figures.pptx",
         "comments": comment_location,
         "mpl_backend": "pgf",
+        "fn": "survival_table.tsv",
     }
 
     if main_kws is None:
@@ -405,7 +406,6 @@ class getSurvival(nextflowProcess):
         else:
             symbols = genes[:]
             gd = "NaN\tNaN"
-        print("!!!", survival_table)
         if survival_table in ["None", None]:
             clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
             clinicals = xena_tools.fix_phenotype_factorlevels(
