@@ -596,12 +596,10 @@ class plotSurvival(nextflowProcess):
                 survival_tools.plotKMpair(
                     cg, mask, title=gene + symbol, ax=ax, make_legend=False
                 )
-                stat = survival_tools.logRankSurvival(
-                    cg["time"], cg["event"], mask
-                )
+                stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
                 stats.append(-1 * np.log10(stat.p_value))
             except:
-                ax.text(0.2, 0.5, 'Not enough data')
+                ax.text(0.2, 0.5, "Not enough data")
                 ax.set_xlim(0, 1)
                 ax.set_ylim(0, 1)
                 stats.append(0.0)
