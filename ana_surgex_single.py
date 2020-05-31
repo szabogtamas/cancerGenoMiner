@@ -585,21 +585,25 @@ class plotSurvival(nextflowProcess):
             gene = gene.replace('"', "")
             symbol = symbols[i]
             ax = axs[i]
-            clinicals = gex_tools.split_by_gex_median(clinicals, symbol)
-            mask = clinicals["cat_" + symbol] == "low"
+            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.split_by_gex_median(cg, symbol)
+            mask = cg["cat_" + symbol] == "low"
             if symbol == gene:
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
             try:
                 survival_tools.plotKMpair(
-                    clinicals, mask, title=gene + symbol, ax=ax, make_legend=False
+                    cg, mask, title=gene + symbol, ax=ax, make_legend=False
                 )
                 stat = survival_tools.logRankSurvival(
-                    clinicals["time"], clinicals["event"], mask
+                    cg["time"], cg["event"], mask
                 )
                 stats.append(-1 * np.log10(stat.p_value))
             except:
+                ax.text(0.2, 0.5, 'Not enough data')
+                ax.set_xlim(0, 1)
+                ax.set_ylim(0, 1)
                 stats.append(0.0)
         ax = plotting_tools.legend_only(ax=axs[-1])
 
@@ -640,7 +644,8 @@ class plotSurvival(nextflowProcess):
         gex.set_xlabel("")
         gex.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
         gex.set_title(
-            "Gene expression subset by survival quartiles\n(mild prognosis is 2nd and 3rd quartile)"
+            "Gene expression subset by survival quartiles\n(mild prognosis is 2nd and 3rd quartile)",
+            fontsize=9,
         )
 
         bottom, top = gex.get_ylim()

@@ -312,10 +312,9 @@ def add_gene_expression_by_genes(
                 colname,
                 "not found. Are you sure you provided the gene symbol corresponding to the genome version?",
             )
+            clinicals[colname] = "NaN"
         else:
             clinicals[colname] = expression_matrix[i]["scores"][0]
-        clinicals[colname] = expression_matrix[i]["scores"][0]
-    clinicals = clinicals.loc[clinicals[colname] != "NaN"]
     return clinicals
 
 
