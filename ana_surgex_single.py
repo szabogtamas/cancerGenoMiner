@@ -115,14 +115,13 @@ def create_pipeline(
                 inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
             ),
             getSurvival(
-                inchannels=["cohorts", "genes", "genedict", "local_survtab"],
+                inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
                 outchannels=["survivals", "gene_nd"],
                 conda=conda,
             ),
             plotSurvival(
                 inchannels=[
                     "survivals",
-                    "plotcohorts",
                     "plotgenes",
                     "symdict",
                     "numplot",
@@ -280,12 +279,24 @@ class getSurvival(nextflowProcess):
         }
 
     def directives(self):
-        return {
-            "publishDir": "'../tables', mode: 'copy'",
-        }
+        return {"publishDir": "'../tables', mode: 'copy'", "echo": "true"}
 
     def channel_pretreat(self):
         return [
+            [
+                "Channel",
+                "from(params.cohorts)",
+                "map{['"
+                + '"'
+                + "'+"
+                + 'params.report_title.replaceAll("^\\"|\\"\\$", "") + '
+                + "' (' +"
+                + "it +')"
+                + '"'
+                + "'"
+                + ", it+'.md', it]}",
+                "set{cohorts}",
+            ],
             [
                 "Channel",
                 "value(params.genes)",
@@ -300,15 +311,28 @@ class getSurvival(nextflowProcess):
                 "collectFile(name: 'genedict.tsv', newLine: true)",
                 "into{genedict; symdict}",
             ],
+            ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
         ]
 
     def channel_specifications(self):
         return {
             "genedict": ("each", "*genedict", "genedict", None, False),
             "genes": ("val", "genes", "genes", None, False),
-            "cohorts": ("val", "cohort", "cohort", None, True),
-            "survtab": ("each", "survtab", "survival_table", None, True),
-            "survivals": ("file", '"${cohort}_data.tsv"', "outFile", None, False),
+            "cohorts": (
+                "tuple",
+                ("note_title", "note_name", "cohort"),
+                (None, None, "cohort"),
+                None,
+                False,
+            ),
+            "nicer_survtab": ("each", "survtab", "survival_table", None, False),
+            "survivals": (
+                "tuple",
+                ("note_title", "note_name", "cohort", '"${cohort}_data.tsv"'),
+                (None, None, None, "outFile"),
+                None,
+                False,
+            ),
             "gene_nd": ("file", "'genedict.tsv'", "gd", None, False),
         }
 
@@ -371,12 +395,17 @@ class getSurvival(nextflowProcess):
 
         dataset = cohort + phenotype_prefix
         gex_dataset = cohort + gex_prefix
+        ch = ""
+        if len(cohort.split("-")) > 1:
+            ch = cohort.split("-")[1]
         if genedict is not None:
             symbols = gex_tools.map_genenames(genes, genedict)
+            with open(genedict, "r") as f:
+                gd = f.read()
         else:
             symbols = genes[:]
-        with open(genedict, "r") as f:
-            gd = f.read()
+            gd = "NaN\tNaN"
+        print("!!!", survival_table)
         if survival_table in ["None", None]:
             clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
             clinicals = xena_tools.fix_phenotype_factorlevels(
@@ -393,7 +422,9 @@ class getSurvival(nextflowProcess):
                 clinicals, xena_hub, dataset
             )
         else:
-            clinicals = survival_tools.pd.from_csv(survival_table, sep="\t")
+            clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
+            clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
+            clinicals = clinicals.set_index("sample")
         clinicals = gex_tools.add_gene_expression_by_genes(
             symbols, clinicals, xena_hub, gex_dataset
         )
@@ -417,44 +448,23 @@ class plotSurvival(nextflowProcess):
         }
 
     def directives(self):
-        return {
-            "publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
-        }
-
-    def channel_pretreat(self):
-        return [
-            [
-                "Channel",
-                "from(params.cohorts)",
-                "map{['"
-                + '"'
-                + "'+"
-                + 'params.report_title.replaceAll("^\\"|\\"\\$", "") + '
-                + "' (' +"
-                + "it +')"
-                + '"'
-                + "'"
-                + ", it+'.md', it]}",
-                "set{plotcohorts}",
-            ],
-        ]
+        return {"publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"'}
 
     def channel_specifications(self):
         return {
             "symdict": ("each", "*symdict", "genedict", None, False),
             "mpl_backend": ("env", "MPLBACK", None, None, True),
             "plotgenes": ("val", "plotgenes", "genes", None, False),
-            "plotcohorts": (
+            "survivals": (
                 "tuple",
-                ("note_title", "note_name", "plotcohort"),
-                (None, None, "cohort"),
+                ("note_title", "note_name", "plotcohort", '"${plotcohort}_data.tsv"'),
+                (None, None, "cohort", "clinicals"),
                 None,
                 False,
             ),
-            "survivals": ("file", "survivals", "clinicals", None, False),
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
             "plotnames": ("val", "plotcohort", "outFile", None, False),
-            "images": ("file", '"${plotcohort}.png"', None, None, False),
+            "images": ("file", '"*.png"', None, None, False),
             "plots": (
                 "tuple",
                 ('"${plotcohort}.pgf"', '"${plotcohort}_expression.pgf"'),
@@ -505,7 +515,7 @@ class plotSurvival(nextflowProcess):
     def process(
         self,
         *,
-        clinicals: str = par_examples.cohort,
+        clinicals: str = "",
         cohort: str = par_examples.cohort,
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
@@ -562,7 +572,6 @@ class plotSurvival(nextflowProcess):
 
         ### Read the prefetched data table
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
-        clinicals = clinicals.set_index("SampleID")
         smallclinicals = clinicals.head()
 
         ### Plot survival for every gene
@@ -582,16 +591,19 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
-            survival_tools.plotKMpair(
-                clinicals, mask, title=gene + symbol, ax=ax, make_legend=False
-            )
-            stat = survival_tools.logRankSurvival(
-                clinicals["time"], clinicals["event"], mask
-            )
-            stats.append(-1 * np.log10(stat.p_value))
+            try:
+                survival_tools.plotKMpair(
+                    clinicals, mask, title=gene + symbol, ax=ax, make_legend=False
+                )
+                stat = survival_tools.logRankSurvival(
+                    clinicals["time"], clinicals["event"], mask
+                )
+                stats.append(-1 * np.log10(stat.p_value))
+            except:
+                stats.append(0.0)
         ax = plotting_tools.legend_only(ax=axs[-1])
 
-        ### Create prognosis categories based pn survival quartiles
+        ### Create prognosis categories based on survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
         df = ["gex_" + symbol for symbol in symbols]
         df = clinicals.loc[:, ["time"] + df]
@@ -606,29 +618,17 @@ class plotSurvival(nextflowProcess):
 
         ### Plot distribution of gene expression
         fig, gex = plt.subplots(figsize=(7.2, 3.6))
-        gex = plotting_tools.sns.boxplot(
+        gex = plotting_tools.sns.violinplot(
             x="gene",
             y="gex",
             hue="prognosis",
             hue_order=["poor", "mild", "good"],
-            dodge=True,
             data=df,
-            whis=np.inf,
-            color="white",
-            linewidth=0.4,
+            linewidth=0.2,
             ax=gex,
         )
-        gex = plotting_tools.sns.stripplot(
-            x="gene",
-            y="gex",
-            hue="prognosis",
-            hue_order=["poor", "mild", "good"],
-            dodge=True,
-            data=df,
-            ax=gex,
-            size=1,
-            jitter=0.3,
-        )
+        # gex = plotting_tools.sns.boxplot( x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, whis=np.inf, color="white", linewidth=0.4, ax=gex,)
+        # gex = plotting_tools.sns.stripplot(x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, ax=gex, size=1, jitter=0.3,)
         pg1 = gex.scatter(0, 0, s=1, label="Poor prognosis")
         pg2 = gex.scatter(0, 0, s=1, label="Mild prognosis")
         pg3 = gex.scatter(0, 0, s=1, label="Good prognosis")
@@ -1017,9 +1017,9 @@ class pdfFromLatex(nextflowProcess):
         self.manualDoc = "Convert the LaTeX format report into pdf.\n"
         self.inputs = ["file reportex"]
         self.outputs = ['file("*.pdf")']
-        self.command = "pdflatex -interaction nonstopmode -halt-on-error -file-line-error $reportex\n"
-        self.command += "            biber ${reportex.baseName}\n"
-        self.command += "            pdflatex -interaction nonstopmode -halt-on-error -file-line-error $reportex\n"
+        self.command = "pdflatex -interaction nonstopmode -halt-on-error -file-line-error $reportex\n            "
+        self.command += "biber ${reportex.baseName}\n            "
+        self.command += "pdflatex -interaction nonstopmode -halt-on-error -file-line-error $reportex\n"
 
         self.container = environment_definiton.latex_container
 

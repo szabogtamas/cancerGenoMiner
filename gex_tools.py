@@ -309,7 +309,7 @@ def add_gene_expression_by_genes(
         colname = colprefix + target_genes[i]
         if len(expression_matrix[i]["scores"][0]) < 1:
             print(
-                gene,
+                colname,
                 "not found. Are you sure you provided the gene symbol corresponding to the genome version?",
             )
         else:

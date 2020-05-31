@@ -221,7 +221,7 @@ def curatedSurvival(
 
     Parameters
     ----------
-        cfn
+    cfn
         Name of the clinical information file.
     sfn
         Name of the sample type information file.
@@ -274,6 +274,7 @@ def curatedSurvival(
     sampleTypes[saved_columns] = pd.DataFrame(
         sampleTypes["tmp_col"].tolist(), index=sampleTypes.index
     )
+    sampleTypes["SampleID"] = sampleTypes[sample_indexcol]
     sampleTypes = sampleTypes.set_index(sample_indexcol)
     sampleTypes = sampleTypes.loc[:, saved_columns + [sampletypecol, "patient"]]
     return sampleTypes
