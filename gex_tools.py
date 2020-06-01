@@ -210,8 +210,8 @@ def add_gene_expression_by_probes(
     clinicals: pd.DataFrame,
     xena_hub: str,
     ds: str,
-    probemap: dict,
     *,
+    probemap: Union[None, dict] = None,
     gene_names: Union[None, dict] = None,
     colprefix: str = "gex_",
 ) -> pd.DataFrame:
@@ -245,6 +245,8 @@ def add_gene_expression_by_probes(
     target_probes = []
     if gene_names is None:
         gene_names = dict()
+    if probemap is None:
+        probemap = dict()
     for g in target_genes:
         if g in gene_names:
             g = gene_names[g]

@@ -130,6 +130,7 @@ def create_pipeline(
                 ],
                 outchannels=[
                     "plotnames",
+                    "gexnames",
                     "images",
                     "plots",
                     "stats",
@@ -295,7 +296,7 @@ class getSurvival(nextflowProcess):
                 + "it +')"
                 + '"'
                 + "'"
-                + ", it+'.md', it]}",
+                + ", it+'.md', it, it+'_expression']}",
                 "set{cohorts}",
             ],
             [
@@ -321,16 +322,16 @@ class getSurvival(nextflowProcess):
             "genes": ("val", "genes", "genes", None, False),
             "cohorts": (
                 "tuple",
-                ("note_title", "note_name", "cohort"),
-                (None, None, "cohort"),
+                ("note_title", "note_name", "cohort", "xplot"),
+                (None, None, "cohort", None),
                 None,
                 False,
             ),
             "nicer_survtab": ("each", "survtab", "survival_table", None, False),
             "survivals": (
                 "tuple",
-                ("note_title", "note_name", "cohort", '"${cohort}_data.tsv"'),
-                (None, None, None, "outFile"),
+                ("note_title", "note_name", "cohort", "xplot", '"${cohort}_data.tsv"'),
+                (None, None, None, None, "outFile"),
                 None,
                 False,
             ),
@@ -366,6 +367,7 @@ class getSurvival(nextflowProcess):
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
         survival_table: Union[None, str] = None,
+        gex_basis: str = 'gene',
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
 
         """
@@ -387,6 +389,8 @@ class getSurvival(nextflowProcess):
             A table mapping gene names to gene symbols.
         survival_table
             Manual curated survival data outside the scope of UCSC Xena.
+        gex_basis
+            If gene average or probe values should be checked Type `probes` for probes.
         
         Returns
         -------
@@ -425,9 +429,14 @@ class getSurvival(nextflowProcess):
             clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
             clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
             clinicals = clinicals.set_index("sample")
-        clinicals = gex_tools.add_gene_expression_by_genes(
-            symbols, clinicals, xena_hub, gex_dataset
-        )
+        if gex_basis == 'gene':
+            clinicals = gex_tools.add_gene_expression_by_genes(
+                symbols, clinicals, xena_hub, gex_dataset
+            )
+        else:
+            clinicals = gex_tools.add_gene_expression_by_probes(
+                symbols, clinicals, xena_hub, gex_dataset
+            )
         return clinicals, gd
 
 
@@ -457,18 +466,19 @@ class plotSurvival(nextflowProcess):
             "plotgenes": ("val", "plotgenes", "genes", None, False),
             "survivals": (
                 "tuple",
-                ("note_title", "note_name", "plotcohort", '"${plotcohort}_data.tsv"'),
-                (None, None, "cohort", "clinicals"),
+                ("note_title", "note_name", "plotcohort", "gexcohort", '"${plotcohort}_data.tsv"'),
+                (None, None, "cohort", None, "clinicals"),
                 None,
                 False,
             ),
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
             "plotnames": ("val", "plotcohort", "outFile", None, False),
+            "gexnames": ("val", "gexcohort", "gex", None, False),
             "images": ("file", '"*.png"', None, None, False),
             "plots": (
                 "tuple",
-                ('"${plotcohort}.pgf"', '"${plotcohort}_expression.pgf"'),
-                (None, "gex"),
+                ('"${plotcohort}.pgf"', '"${gexcohort}.pgf"'),
+                (None, None),
                 None,
                 False,
             ),
@@ -850,6 +860,7 @@ class pptFromFigures(nextflowProcess):
             ],
             [
                 "images",
+                "flatten()",
                 "map{[it.getName().replaceAll('.png', ''), it]}",
                 "map{it.join('](')}",
                 "toList()",
