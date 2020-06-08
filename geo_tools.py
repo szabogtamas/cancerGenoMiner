@@ -46,27 +46,17 @@ def recipe(
     sample of the dataset.
     """
 
-    ### DOwnload gene expression from GEO
-    gex = add_gene_expression_by_probes(
-        genes, df, xena_hub, dataset, probedict, gene_names=gene_symbols
-    )
+    ### Download gene expression from GEO
+    gex = agex_from_GEO_dataset(dataset, genes_of_interest)
     hint(
-        verbose,
-        "Gene expression in",
-        dataset,
-        "retrived after mapping to probes:\n",
-        gex.head(),
+        verbose, "Gene expression in", dataset, gex.head(),
     )
 
-    ### Mark samples where expression is in the lower or upper quartile
-    for gene in genes:
-        gex = split_by_gex_quartile(gex, gene)
-    hint(verbose, "Gene expression categories based on quartiles:\n", gex.head())
-
-    ### Split samples by median expression
-    for gene in genes:
-        gex = split_by_gex_median(gex, gene)
-    hint(verbose, "Gene expression categories based on the median:\n", gex.head())
+    ### Explore grouping of samples
+    gex["GroupName"] = gex.apply(explore_sample_grouping, axis=1)
+    hint(
+        verbose, "Groups found:", gex["GroupName"].unique(),
+    )
 
     return gex
 
