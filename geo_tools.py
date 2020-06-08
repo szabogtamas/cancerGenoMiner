@@ -13,7 +13,7 @@ __name__, __package__, invoked_directly = introSpect.cmdSupport(
 )
 hint = introSpect.hint
 
-import urllib
+import urllib, re
 import pandas as pd
 from io import StringIO
 from bs4 import BeautifulSoup
@@ -160,6 +160,41 @@ def resolve_genesym_to_RefId(dataset: str, genesym: str) -> list:
                     if i.find(" (ID_REF)") > -1:
                         refs.append(i.replace(" (ID_REF)", ""))
     return refs
+
+
+def explore_sample_grouping(s: pd.Series) -> str:
+
+    """
+    Creates group names by stripping numbers off replicate samples. To be used with
+    `df.apply`.
+
+    Parameters
+    ----------
+    s
+        Rows of GEO data table as a Pandas series.
+
+    Returns
+    -------
+    Pandas data series with group name for each record.
+    """
+
+    REPLICATES_REGEX = re.compile(
+        "(biological replicate|biological rep|replicate|rep|Rep)\s*\d*", re.S
+    )
+    ENDNUMBERS_REGEX = re.compile("\d*\w+$", re.S)
+    group = str(s["SampleName"])
+    truncated = False
+    match = REPLICATES_REGEX.search(group)
+    if match:
+        groupname_end = match.start()
+        group = group[:groupname_end].strip()
+        truncated = True
+    if not truncated:
+        match = ENDNUMBERS_REGEX.search(group)
+        if match:
+            groupname_end = match.start()
+            group = group[:groupname_end].strip()
+    return group
 
 
 def main():
