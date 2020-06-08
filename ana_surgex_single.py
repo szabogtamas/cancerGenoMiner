@@ -367,7 +367,7 @@ class getSurvival(nextflowProcess):
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
         survival_table: Union[None, str] = None,
-        gex_basis: str = 'gene',
+        gex_basis: str = "gene",
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
 
         """
@@ -429,7 +429,7 @@ class getSurvival(nextflowProcess):
             clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
             clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
             clinicals = clinicals.set_index("sample")
-        if gex_basis == 'gene':
+        if gex_basis == "gene":
             clinicals = gex_tools.add_gene_expression_by_genes(
                 symbols, clinicals, xena_hub, gex_dataset
             )
@@ -466,7 +466,13 @@ class plotSurvival(nextflowProcess):
             "plotgenes": ("val", "plotgenes", "genes", None, False),
             "survivals": (
                 "tuple",
-                ("note_title", "note_name", "plotcohort", "gexcohort", '"${plotcohort}_data.tsv"'),
+                (
+                    "note_title",
+                    "note_name",
+                    "plotcohort",
+                    "gexcohort",
+                    '"${plotcohort}_data.tsv"',
+                ),
                 (None, None, "cohort", None, "clinicals"),
                 None,
                 False,

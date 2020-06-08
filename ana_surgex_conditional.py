@@ -189,7 +189,9 @@ def create_pipeline(
         f.write(comment_on_methods)
     return os.path.dirname(location + "/pipeline/main.nf")
 
+
 recipe = create_pipeline
+
 
 def main():
     """
