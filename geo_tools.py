@@ -181,7 +181,7 @@ def explore_sample_grouping(s: pd.Series) -> str:
     REPLICATES_REGEX = re.compile(
         "(biological replicate|biological rep|replicate|rep|Rep)\s*\d*", re.S
     )
-    ENDNUMBERS_REGEX = re.compile("\d*\w+$", re.S)
+    ENDNUMBERS_REGEX = re.compile("\d*$", re.S)
     group = str(s["SampleName"])
     truncated = False
     match = REPLICATES_REGEX.search(group)
