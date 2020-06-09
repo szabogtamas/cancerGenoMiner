@@ -18,6 +18,7 @@ latex_container = "docker://blang/latex:ctanfull"
 environment = """name: survivor
 channels:
   - brown-data-science
+  - anaconda
   - bioconda
   - conda-forge
   - defaults
@@ -28,11 +29,12 @@ dependencies:
   - autograd=1.3=py_0
   - autograd-gamma=0.4.1=py_0
   - backcall=0.1.0=py_0
+  - beautifulsoup4=4.8.2=py38_0
   - bleach=3.1.1=py_0
-  - ca-certificates=2019.11.28=hecc5488_0
+  - ca-certificates=2020.1.1=0
   - cachetools=3.1.1=py_0
   - cairo=1.16.0=hcf35c78_1003
-  - certifi=2019.11.28=py38_0
+  - certifi=2020.4.5.1=py38_0
   - cffi=1.14.0=py38hd463f26_0
   - chardet=3.0.4=py38_1003
   - cryptography=2.8=py38h72c5cf5_1
@@ -72,6 +74,7 @@ dependencies:
   - jupyter_core=4.6.3=py38_0
   - jupyterlab=2.0.0=py_1
   - jupyterlab_server=1.0.6=py_0
+  - jupytext=1.4.2=pyh9f0ad1d_0
   - kiwisolver=1.1.0=py38hc9558a2_0
   - krb5=1.16.4=h2fd8d38_0
   - ld_impl_linux-64=2.33.1=h53a641e_8
@@ -109,7 +112,7 @@ dependencies:
   - numpy=1.18.1=py38h95a1406_0
   - oauth2client=4.1.3=py_0
   - openjpeg=2.3.1=h981e76c_3
-  - openssl=1.1.1e=h516909a_0
+  - openssl=1.1.1g=h7b6447c_0
   - pandas=1.0.1=py38hb3f55d8_0
   - pandoc=2.9.2=0
   - pandocfilters=1.4.2=py_1
@@ -139,7 +142,7 @@ dependencies:
   - pyparsing=2.4.6=py_0
   - pyrsistent=0.15.7=py38h516909a_0
   - pysocks=1.7.1=py38_0
-  - python=3.8
+  - python=3.8.2=h9d8adfe_1_cpython
   - python-dateutil=2.8.1=py_0
   - pytz=2019.3=py_0
   - pyyaml=5.1.2=py38h516909a_1
@@ -153,6 +156,7 @@ dependencies:
   - setuptools=45.2.0=py38_0
   - simplejson=3.17.0=py38h516909a_0
   - six=1.14.0=py38_0
+  - soupsieve=2.0.1=py_0
   - sqlite=3.30.1=hcee41ef_0
   - statsmodels=0.11.1=py38h516909a_0
   - terminado=0.8.3=py38_0
