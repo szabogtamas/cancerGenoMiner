@@ -142,7 +142,7 @@ dependencies:
   - pyparsing=2.4.6=py_0
   - pyrsistent=0.15.7=py38h516909a_0
   - pysocks=1.7.1=py38_0
-  - python=3.8.2=h9d8adfe_1_cpython
+  - python=3.8
   - python-dateutil=2.8.1=py_0
   - pytz=2019.3=py_0
   - pyyaml=5.1.2=py38h516909a_1
