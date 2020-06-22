@@ -215,7 +215,7 @@ class rankSurvivalImpacts(nextflowProcess):
         cohort: str = par_examples.cohort,
         gene: str = par_examples.target_gene,
         genedict: Union[None, str] = None,
-        geneslice: int = 50,
+        geneslice: int = 500,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
         gex_basis: str = "gene",
