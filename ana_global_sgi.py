@@ -28,6 +28,7 @@ from cancerGenoMiner import (
     gex_tools,
     reporting_tools,
     ana_surgex_single,
+    ana_surgex_interaction,
 )
 import connectDrive
 
