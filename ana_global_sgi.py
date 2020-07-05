@@ -82,7 +82,6 @@ def create_pipeline(
     comment_location = location + "/pipeline/comments.tex"
     default_main_kws = {
         "cohorts": [par_examples.cohort] + par_examples.lung_cohorts,
-        "genedict": {"NaN": "NaN"},  # par_examples.prognosis_genecodes,
         "survtab": "None",
         "report_title": '"Title of report"',
         "author_name": '"Author"',
@@ -117,7 +116,7 @@ def create_pipeline(
                 inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
             ),
             rankSurvivalImpacts(
-                inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
+                inchannels=["cohorts", "nicer_survtab"],
                 outchannels=["interactions", "gene_nd"],
                 conda=conda,
             ),
@@ -167,23 +166,14 @@ class rankSurvivalImpacts(nextflowProcess):
 
     def channel_pretreat(self):
         return [
-            [
-                "Channel",
-                "from(params.genedict)",
-                "map{it.join('\\t')}",
-                "collectFile(name: 'genedict.tsv', newLine: true)",
-                "set{genedict}",
-            ],
             ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
         ]
 
     def channel_specifications(self):
         return {
-            "genedict": ("each", "*genedict", "genedict", None, False),
             "nicer_survtab": ("each", "survtab", "survival_table", None, False),
             "cohorts": ("val", "cohort", "cohort", None, True,),
             "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
-            "gene_nd": ("file", "'genedict.tsv'", "gd", None, False),
         }
 
     def customize_features(self):
@@ -212,7 +202,6 @@ class rankSurvivalImpacts(nextflowProcess):
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        genedict: Union[None, str] = None,
         geneslice: int = 500,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
@@ -232,8 +221,6 @@ class rankSurvivalImpacts(nextflowProcess):
             Constant part of the clinical phenotype dataset name.
         cohort
             The TCGA cohort to check.
-        genedict
-            A table mapping gene names to gene symbols.
         geneslice
             The size of gene batches to be querried.
         survival_table
@@ -251,17 +238,9 @@ class rankSurvivalImpacts(nextflowProcess):
 
         dataset = cohort + phenotype_prefix
         gex_dataset = cohort + gex_prefix
-        gene = gene.replace('"', "")
         ch = ""
         if len(cohort.split("-")) > 1:
             ch = cohort.split("-")[1]
-        if genedict is not None:
-            symbol = gex_tools.map_genenames([gene], genedict)[0]
-            with open(genedict, "r") as f:
-                gd = f.read()
-        else:
-            symbol = gene[:]
-            gd = "NaN\tNaN"
 
         ### Retrieve clinical information
         if survival_table in ["None", None]:
@@ -283,16 +262,10 @@ class rankSurvivalImpacts(nextflowProcess):
             clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
             clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
             clinicals = clinicals.set_index("sample")
-        if gex_basis == "gene":
-            clinicals = gex_tools.add_gene_expression_by_genes(
-                [symbol], clinicals, xena_hub, gex_dataset
-            )
-        else:
-            clinicals = gex_tools.add_gene_expression_by_probes(
-                [symbol], clinicals, xena_hub, gex_dataset
-            )
 
         ### Retrieve a list of all genes
+        print(xena_hub, gex_dataset)
+        print(xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, 5))
         allgenes = np.array(
             xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
         )
@@ -308,67 +281,78 @@ class rankSurvivalImpacts(nextflowProcess):
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
         probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
 
-        for gene in allgenes:
+        print(allgenes)
+        print(clinicals.head())
+        for symbol in allgenes:
 
-        ### Add data on the expression of the focus gene
-        cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
-        cg = gex_tools.split_by_gex_median(cg, symbol)
-        mask = cg["cat_" + symbol] == "low"
-        try:
-            stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
-            basestat = -1 * np.log10(stat.p_value)
-        except:
-            basestat = 0.0
-        records = []
-
-        ### Loop through genes in chunks
-        for chunk in geneslices:
-            etdf = gex_tools.add_gene_expression_by_probes(
-                chunk, cg, xena_hub, gex_dataset
-            )
-            for i, interactor in enumerate(chunk):
-                tdf = gex_tools.split_by_gex_median(etdf, interactor)
-                bmask = tdf["cat_" + symbol] == "low"
-                imask = tdf["cat_" + interactor] == "low"
-                try:
-                    interactor_enables = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (~imask & bmask),
-                                alternative_mask=(~imask & ~bmask),
-                            ).p_value
-                        )
-                        - basestat
-                    )
-                except:
-                    interactor_enables = 0.0
-                try:
-                    interactor_inhibits = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (imask & bmask),
-                                alternative_mask=(imask & ~bmask),
-                            ).p_value
-                        )
-                        - basestat
-                    )
-                except:
-                    interactor_inhibits = 0.0
-                records.append(
-                    (
-                        cohort,
-                        symbol,
-                        interactor,
-                        interactor_enables,
-                        interactor_inhibits,
-                    )
+            symbol = probedict[symbol]
+            if gex_basis == "gene":
+                cg = gex_tools.add_gene_expression_by_genes(
+                    [symbol], clinicals, xena_hub, gex_dataset
                 )
+            else:
+                cg = gex_tools.add_gene_expression_by_probes(
+                    [symbol], clinicals, xena_hub, gex_dataset
+                )
+            ### Add data on the expression of the focus gene
+            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.split_by_gex_median(cg, symbol)
+            mask = cg["cat_" + symbol] == "low"
+            try:
+                stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
+                basestat = -1 * np.log10(stat.p_value)
+            except:
+                basestat = 0.0
+            records = []
+
+            ### Loop through genes in chunks
+            for chunk in geneslices:
+                etdf = gex_tools.add_gene_expression_by_probes(
+                    chunk, cg, xena_hub, gex_dataset
+                )
+                for i, interactor in enumerate(chunk):
+                    tdf = gex_tools.split_by_gex_median(etdf, interactor)
+                    bmask = tdf["cat_" + symbol] == "low"
+                    imask = tdf["cat_" + interactor] == "low"
+                    try:
+                        interactor_enables = (
+                            -1
+                            * np.log10(
+                                survival_tools.logRankSurvival(
+                                    tdf["time"],
+                                    tdf["event"],
+                                    (~imask & bmask),
+                                    alternative_mask=(~imask & ~bmask),
+                                ).p_value
+                            )
+                            - basestat
+                        )
+                    except:
+                        interactor_enables = 0.0
+                    try:
+                        interactor_inhibits = (
+                            -1
+                            * np.log10(
+                                survival_tools.logRankSurvival(
+                                    tdf["time"],
+                                    tdf["event"],
+                                    (imask & bmask),
+                                    alternative_mask=(imask & ~bmask),
+                                ).p_value
+                            )
+                            - basestat
+                        )
+                    except:
+                        interactor_inhibits = 0.0
+                    records.append(
+                        (
+                            cohort,
+                            symbol,
+                            interactor,
+                            interactor_enables,
+                            interactor_inhibits,
+                        )
+                    )
         records = gex_tools.pd.DataFrame(
             records,
             columns=[
