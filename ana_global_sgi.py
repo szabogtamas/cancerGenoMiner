@@ -117,7 +117,7 @@ def create_pipeline(
             ),
             rankSurvivalImpacts(
                 inchannels=["cohorts", "nicer_survtab"],
-                outchannels=["interactions", "gene_nd"],
+                outchannels=["interactions"],
                 conda=conda,
             ),
             ana_surgex_interaction.collectInteractionWeights(
@@ -186,12 +186,7 @@ class rankSurvivalImpacts(nextflowProcess):
                     "dest": "outFile",
                     "help": "Location where results should be saved. If not specified, STDOUT will be used.",
                 },
-            ),
-            "gd": (
-                2,
-                "--gd",
-                {"dest": "gd", "help": "Temporary file to store gene symbol mapping.",},
-            ),
+            )
         }
         return None
 
@@ -261,8 +256,6 @@ class rankSurvivalImpacts(nextflowProcess):
             clinicals = clinicals.set_index("sample")
 
         ### Retrieve a list of all genes
-        print(xena_hub, gex_dataset)
-        print(xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, 5))
         allgenes = np.array(
             xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
         )
@@ -273,13 +266,12 @@ class rankSurvivalImpacts(nextflowProcess):
         geneslices.append(rest.tolist())
         allgenes = allgenes[:2]  ### For testing only!!!
         geneslices = geneslices[:2]  ### For testing only!!!
+        #TODO: Save basestat, but specifying if low or high expression is beneficial (https://sphweb.bumc.bu.edu/otlt/MPH-Modules/BS/BS704_Survival/BS704_Survival5.html)
 
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
         probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
 
-        print(allgenes)
-        print(clinicals.head())
         for symbol in allgenes:
 
             ### Add data on the expression of the focus gene
@@ -336,7 +328,7 @@ class rankSurvivalImpacts(nextflowProcess):
                     records.append(
                         (
                             cohort,
-                            symbol,
+                            probedict[symbol],
                             interactor,
                             interactor_enables,
                             interactor_inhibits,
@@ -354,7 +346,7 @@ class rankSurvivalImpacts(nextflowProcess):
         )
         records["interactor"] = records["interactor"].map(probedict)
 
-        return records, gd
+        return records
 
 def main():
     """
