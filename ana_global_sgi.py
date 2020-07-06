@@ -205,7 +205,6 @@ class rankSurvivalImpacts(nextflowProcess):
         geneslice: int = 500,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
-        gex_basis: str = "gene",
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
 
         """
@@ -227,8 +226,6 @@ class rankSurvivalImpacts(nextflowProcess):
             Manual curated survival data outside the scope of UCSC Xena.
         probemap
             A probemap file for testing direct table download.
-        gex_basis
-            If gene average or probe values should be checked Type `probes` for probes.
         
         Returns
         -------
@@ -285,17 +282,9 @@ class rankSurvivalImpacts(nextflowProcess):
         print(clinicals.head())
         for symbol in allgenes:
 
-            symbol = probedict[symbol]
-            if gex_basis == "gene":
-                cg = gex_tools.add_gene_expression_by_genes(
-                    [symbol], clinicals, xena_hub, gex_dataset
-                )
-            else:
-                cg = gex_tools.add_gene_expression_by_probes(
-                    [symbol], clinicals, xena_hub, gex_dataset
-                )
             ### Add data on the expression of the focus gene
-            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.add_gene_expression_by_probes([symbol], clinicals, xena_hub, gex_dataset)
+            cg = cg.loc[cg["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
             try:
