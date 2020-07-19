@@ -110,6 +110,18 @@ def recipe(
         stat.p_value,
     )
 
+    ### Decide if gene is protective or accelerates disease
+    acceleration = signedByMedianSurvival(clinicals["time"], clinicals["event"], mask)
+    if acceleration > 0:
+        verdict = "enhancer"
+    else:
+        verdict = "favourable"
+    hint(
+        verbose,
+        "Effect of the gene on survival:\n",
+        verdict,
+    )
+
     ### Plot survival
     plotting_tools.set_figure_rc()
     ax = plotKMpair(clinicals, mask)
@@ -331,6 +343,7 @@ def signedByMedianSurvival(
 
     """
     Decide if group defined by mask has a better (+1) or worse (-1) prognosis.
+    Since typically, mask defines low expression, +1 means accelerating disease.
 
     Parameters
     ----------
@@ -363,7 +376,7 @@ def signedByMedianSurvival(
     kmf2.fit(
         T[alternative_mask], E[alternative_mask],
     )
-    if np.trapz(kmf1.survival_function_at_times(timeline)) < np.trapz(
+    if np.trapz(kmf1.survival_function_at_times(timeline)) > np.trapz(
         kmf2.survival_function_at_times(timeline)
     ):
         return 1
