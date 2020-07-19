@@ -316,7 +316,7 @@ class rankSurvivalImpacts(nextflowProcess):
         rest = allgenes[geneslice * gsn :]
         allgenes = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
         allgenes.append(rest.tolist())
-        #allgenes = allgenes[:2]  ### For testing only!!!
+        # allgenes = allgenes[:2]  ### For testing only!!!
 
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)

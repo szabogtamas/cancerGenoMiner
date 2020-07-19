@@ -132,6 +132,7 @@ def create_pipeline(
         *nodes,
         main_kws=main_kws,
         location=location + "/pipeline",
+        queueRestriction=5,
         generalSettings=general_configs,
         containerPaths=container_paths,
         verbose=verbose,
@@ -266,7 +267,6 @@ class rankSurvivalImpacts(nextflowProcess):
         geneslices.append(rest.tolist())
         allgenes = allgenes[:2]  ### For testing only!!!
         geneslices = geneslices[:2]  ### For testing only!!!
-        #TODO: Save basestat, but specifying if low or high expression is beneficial (https://sphweb.bumc.bu.edu/otlt/MPH-Modules/BS/BS704_Survival/BS704_Survival5.html)
 
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
@@ -275,7 +275,9 @@ class rankSurvivalImpacts(nextflowProcess):
         for symbol in allgenes:
 
             ### Add data on the expression of the focus gene
-            cg = gex_tools.add_gene_expression_by_probes([symbol], clinicals, xena_hub, gex_dataset)
+            cg = gex_tools.add_gene_expression_by_probes(
+                [symbol], clinicals, xena_hub, gex_dataset
+            )
             cg = cg.loc[cg["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
@@ -347,6 +349,7 @@ class rankSurvivalImpacts(nextflowProcess):
         records["interactor"] = records["interactor"].map(probedict)
 
         return records
+
 
 def main():
     """

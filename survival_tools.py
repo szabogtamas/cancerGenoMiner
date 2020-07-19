@@ -15,6 +15,7 @@ __name__, __package__, invoked_directly = introSpect.cmdSupport(
 hint = introSpect.hint
 
 import pandas as pd
+import numpy as np
 from lifelines import statistics, KaplanMeierFitter
 from typing import Union, Tuple, List, Sequence
 from . import par_examples, gdc_features, xena_tools, gex_tools, plotting_tools
@@ -289,7 +290,7 @@ def logRankSurvival(
 ) -> None:
 
     """
-    Calculated a logRank p-value of survival in two conditions
+    Calculate a logRank p-value of survival in two conditions
     being different.
 
     Parameters
@@ -317,6 +318,57 @@ def logRankSurvival(
         event_observed_A=E[mask],
         event_observed_B=E[alternative_mask],
     )
+
+
+def signedByMedianSurvival(
+    T: pd.Series,
+    E: pd.Series,
+    mask: pd.Series,
+    *,
+    alternative_mask: Union[None, pd.Series] = None,
+    timeline: Union[None, Sequence] = None,
+) -> int:
+
+    """
+    Decide if group defined by mask has a better (+1) or worse (-1) prognosis.
+
+    Parameters
+    ----------
+    T
+        A series of survival times.
+    E
+        A series of events, where 1 is the event (death).
+    mask
+        A Pandas mask for the main group.
+    alternative_mask
+        The second group is the negation of the first mask
+        by default. This parameter sets a custom mask.
+    timeline
+        A series of time points (days in TCGA) when to sample survival probs.
+
+    Returns
+    -------
+    Sign of the survival benefit for the grouping mask.
+    """
+
+    if alternative_mask is None:
+        alternative_mask = ~mask
+    if timeline is None:
+        timeline = [0, 1500, 3000, 4500, 6000, 7500, 9000]
+    kmf1 = KaplanMeierFitter()
+    kmf1.fit(
+        T[mask], E[mask],
+    )
+    kmf2 = KaplanMeierFitter()
+    kmf2.fit(
+        T[alternative_mask], E[alternative_mask],
+    )
+    if np.trapz(kmf1.survival_function_at_times(timeline)) < np.trapz(
+        kmf2.survival_function_at_times(timeline)
+    ):
+        return 1
+    else:
+        return -1
 
 
 def fix_gdc_survival_categories(
