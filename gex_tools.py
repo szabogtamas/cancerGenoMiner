@@ -318,6 +318,43 @@ def add_gene_expression_by_genes(
         else:
             clinicals[colname] = expression_matrix[i]["scores"][0]
     return clinicals
+    
+
+def create_gene_chunks(
+    xena_hub: str,
+    ds: str,
+    *,
+    chunk_size: int = 500,
+) -> pd.DataFrame:
+
+    """
+    Retrieve all genes in the gex datasets in chunks.
+
+    Parameters
+    ----------
+    xena_hub
+        Url of the data repository hub.
+    ds
+        Name of the gene expression dataset (cohort) on the repository hub.
+    chunk_size
+        Number of genes to be grouped together.
+
+    Returns
+    -------
+    Dataframe with dataset (cohort) as first column, chunks as second.
+    """
+
+    allgenes = np.array(
+        xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
+    )
+    N_genes = allgenes.shape[0]
+    gsn = int(allgenes.shape[0] / geneslice)
+    rest = allgenes[geneslice * gsn :]
+    geneslices = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
+    geneslices.append(rest.tolist())
+    allgenes = allgenes[:2]  ### For testing only!!!
+    geneslices = geneslices[:2]  ### For testing only!!!
+    return geneslices
 
 
 def check_probedict(
