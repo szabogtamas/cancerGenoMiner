@@ -133,7 +133,7 @@ def create_pipeline(
         *nodes,
         main_kws=main_kws,
         location=location + "/pipeline",
-        queueRestriction=5,
+        queueRestriction=30,
         generalSettings=general_configs,
         containerPaths=container_paths,
         verbose=verbose,
@@ -191,7 +191,7 @@ class fetchGeneChunks(nextflowProcess):
         cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        chunk_size: int = 5,  # 00,
+        chunk_size: int = 500,
     ) -> list:
 
         """
@@ -248,9 +248,6 @@ class rankSurvivalImpacts(nextflowProcess):
             ],
         ]
 
-    def directives(self):
-        return {"echo": "true"}
-
     def channel_specifications(self):
         return {
             "nicer_survtab": ("each", "survtab", "survival_table", None, False),
@@ -286,7 +283,7 @@ class rankSurvivalImpacts(nextflowProcess):
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        ichunk_size: int = 5,  # 00,
+        ichunk_size: int = 500,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
@@ -479,7 +476,7 @@ class collectInteractionWeights(nextflowProcess):
         return [
             [
                 "interactions",
-                "collectFile(name: 'interactions.tsv', newLine: true, keepHeader: true)",
+                "collectFile(name: 'raw_interactions.tsv', keepHeader: true)",
                 "set{suminteractions}",
             ],
         ]
@@ -488,7 +485,7 @@ class collectInteractionWeights(nextflowProcess):
         return {
             "suminteractions": (
                 "file",
-                "'interactions.tsv'",
+                "'raw_interactions.tsv'",
                 "interactiontable",
                 None,
                 False,
@@ -530,7 +527,7 @@ class collectInteractionWeights(nextflowProcess):
 
         interactions = gex_tools.pd.read_csv(interactiontable, sep="\t")
         interactions = interactions.sort_values(
-            by="interactor", ascending=False
+            by="interactor_inhibits", ascending=False
         ).reset_index()
         interactions = interactions.loc[
             :,
