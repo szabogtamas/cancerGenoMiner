@@ -319,7 +319,7 @@ def add_gene_expression_by_genes(
         else:
             clinicals[colname] = expression_matrix[i]["scores"][0]
     return clinicals
-    
+
 
 def create_gene_chunks(
     cohort: str,
@@ -354,9 +354,12 @@ def create_gene_chunks(
     N_genes = allgenes.shape[0]
     gsn = int(allgenes.shape[0] / chunk_size)
     rest = allgenes[chunk_size * gsn :]
+    rest = rest.tolist()
+    if rest[-1] == "sampleID":
+        rest.pop()
     geneslices = allgenes[: chunk_size * gsn].reshape(-1, chunk_size).tolist()
     geneslices = geneslices[:2]  ### For testing only!!!
-    geneslices.append(rest.tolist())
+    geneslices.append(rest)
     return geneslices
 
 

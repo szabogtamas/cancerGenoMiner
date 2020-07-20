@@ -117,9 +117,7 @@ def recipe(
     else:
         verdict = "favourable"
     hint(
-        verbose,
-        "Effect of the gene on survival:\n",
-        verdict,
+        verbose, "Effect of the gene on survival:\n", verdict,
     )
 
     ### Plot survival

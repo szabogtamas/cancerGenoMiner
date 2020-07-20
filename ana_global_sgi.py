@@ -28,7 +28,6 @@ from cancerGenoMiner import (
     gex_tools,
     reporting_tools,
     ana_surgex_single,
-    ana_surgex_interaction,
 )
 import connectDrive
 
@@ -115,16 +114,14 @@ def create_pipeline(
                 inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
             ),
             fetchGeneChunks(
-                inchannels=["cohorts"],
-                outchannels=["genechunks"],
-                conda=conda,
+                inchannels=["cohorts"], outchannels=["genechunks"], conda=conda,
             ),
             rankSurvivalImpacts(
                 inchannels=["ch_chunks", "nicer_survtab"],
                 outchannels=["interactions", "basestats"],
                 conda=conda,
             ),
-            ana_surgex_interaction.collectInteractionWeights(
+            collectInteractionWeights(
                 inchannels=["suminteractions"],
                 outchannels=["sortinteractions"],
                 conda=conda,
@@ -194,8 +191,8 @@ class fetchGeneChunks(nextflowProcess):
         cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        chunk_size: int = 5,#00,
-        ) -> list:
+        chunk_size: int = 5,  # 00,
+    ) -> list:
 
         """
         Retrieve all genes in the gex datasets in chunks.
@@ -216,11 +213,14 @@ class fetchGeneChunks(nextflowProcess):
         List of evenly sized gene lists, with cohort being the first element.
         """
 
-        gene_chunks = gex_tools.create_gene_chunks(cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=chunk_size)
+        gene_chunks = gex_tools.create_gene_chunks(
+            cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=chunk_size
+        )
         ch_chunks = []
         for e in gene_chunks:
             ch_chunks.append([cohort, ",".join(e)])
         return ch_chunks
+
 
 class rankSurvivalImpacts(nextflowProcess):
     """
@@ -240,13 +240,27 @@ class rankSurvivalImpacts(nextflowProcess):
     def channel_pretreat(self):
         return [
             ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
-            ["genechunks", "collectFile(name: 'chunks.tsv', newLine: true)", ".splitCsv(header: '\t')", "set{ch_chunks}",],
+            [
+                "genechunks",
+                "collectFile(name: 'chunks.tsv')",
+                "splitCsv(sep: '\t')",
+                "set{ch_chunks}",
+            ],
         ]
+
+    def directives(self):
+        return {"echo": "true"}
 
     def channel_specifications(self):
         return {
             "nicer_survtab": ("each", "survtab", "survival_table", None, False),
-            "ch_chunks": ("tuple", ("cohort", "genes"), ("cohort", "genes"), None, False,),
+            "ch_chunks": (
+                "tuple",
+                ("cohort", "genes"),
+                ("cohort", "genes"),
+                None,
+                False,
+            ),
             "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
         }
 
@@ -267,12 +281,12 @@ class rankSurvivalImpacts(nextflowProcess):
     def process(
         self,
         *,
-        genes: str = par_examples.prognosis_genes,
+        genes: list = par_examples.prognosis_genes,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        ichunk_size: int = 5,#00,
+        ichunk_size: int = 5,  # 00,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
@@ -312,6 +326,7 @@ class rankSurvivalImpacts(nextflowProcess):
             ch = cohort.split("-")[1]
 
         ### Retrieve clinical information
+        # TODO: always use the local, prefetched copy for clinicals?
         if survival_table in ["None", None]:
             clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
             clinicals = xena_tools.fix_phenotype_factorlevels(
@@ -332,7 +347,9 @@ class rankSurvivalImpacts(nextflowProcess):
             clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
             clinicals = clinicals.set_index("sample")
 
-        geneslices = gex_tools.create_gene_chunks(cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=ichunk_size)
+        geneslices = gex_tools.create_gene_chunks(
+            cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=ichunk_size
+        )
 
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
@@ -348,14 +365,20 @@ class rankSurvivalImpacts(nextflowProcess):
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
 
-            ### Decide if expression of the gene is favorable (higher expression -> better prognosis -> -1)
-            acceleration = survival_tools.signedByMedianSurvival(cg["time"], cg["event"], mask)
-
-            ### Make stats on survival curve
+            ### Calculate impact of base gene
             try:
+                ### Decide if expression of the gene is favorable (higher expression -> better prognosis -> -1)
+                acceleration = survival_tools.signedByMedianSurvival(
+                    cg["time"], cg["event"], mask
+                )
+
+                ### Make stats on survival curve
                 stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
-                basestat = acceleration * np.log10(stat.p_value) # positive stat means favourable effect on survival
+                basestat = acceleration * np.log10(
+                    stat.p_value
+                )  # positive stat means favourable effect on survival
             except:
+                acceleration = 1.0
                 basestat = 0.0
             records = []
 
@@ -370,7 +393,12 @@ class rankSurvivalImpacts(nextflowProcess):
                     imask = tdf["cat_" + interactor] == "low"
                     try:
                         interactor_enables = (
-                            -1
+                            survival_tools.signedByMedianSurvival(
+                                tdf["time"],
+                                tdf["event"],
+                                (~imask & bmask),
+                                alternative_mask=(~imask & ~bmask),
+                            )
                             * np.log10(
                                 survival_tools.logRankSurvival(
                                     tdf["time"],
@@ -385,7 +413,12 @@ class rankSurvivalImpacts(nextflowProcess):
                         interactor_enables = 0.0
                     try:
                         interactor_inhibits = (
-                            -1
+                            survival_tools.signedByMedianSurvival(
+                                tdf["time"],
+                                tdf["event"],
+                                (imask & bmask),
+                                alternative_mask=(imask & ~bmask),
+                            )
                             * np.log10(
                                 survival_tools.logRankSurvival(
                                     tdf["time"],
@@ -423,6 +456,93 @@ class rankSurvivalImpacts(nextflowProcess):
         records["interactor"] = records["interactor"].map(probedict)
 
         return records
+
+
+class collectInteractionWeights(nextflowProcess):
+    """
+    Nextflow process to execute the function below.
+    """
+
+    def dependencies(self):
+        return {
+            "imports": [
+                "from typing import Union, Tuple",
+                "from cancerGenoMiner import gex_tools",
+            ],
+            "inhouse_packages": [cgm_folder, intro_folder],
+        }
+
+    def directives(self):
+        return {"publishDir": "'../tables', mode: 'copy'"}
+
+    def channel_pretreat(self):
+        return [
+            [
+                "interactions",
+                "collectFile(name: 'interactions.tsv', newLine: true, keepHeader: true)",
+                "set{suminteractions}",
+            ],
+        ]
+
+    def channel_specifications(self):
+        return {
+            "suminteractions": (
+                "file",
+                "'interactions.tsv'",
+                "interactiontable",
+                None,
+                False,
+            ),
+            "sortinteractions": ("file", "'interactions.tsv'", "outFile", None, False),
+        }
+
+    def customize_features(self):
+        self.modified_kws = {
+            "outFile": (
+                1,
+                "-o",
+                "--outFile",
+                {
+                    "dest": "outFile",
+                    "help": "Location where results should be saved. If not specified, STDOUT will be used.",
+                },
+            ),
+        }
+        return None
+
+    def process(
+        self, *, interactiontable: str = "interactions.tsv",
+    ) -> gex_tools.pd.DataFrame:
+
+        """
+        Collect interaction data and sort, giving credit to genes most enhanced.
+
+        Parameters
+        ----------
+        interactiontable
+            File name of data table.
+        
+        Returns
+        -------
+        Interaction weights sorted according to our preference.
+        
+        """
+
+        interactions = gex_tools.pd.read_csv(interactiontable, sep="\t")
+        interactions = interactions.sort_values(
+            by="interactor", ascending=False
+        ).reset_index()
+        interactions = interactions.loc[
+            :,
+            [
+                "cohort",
+                "symbol",
+                "interactor",
+                "interactor_enables",
+                "interactor_inhibits",
+            ],
+        ]
+        return interactions
 
 
 def main():
