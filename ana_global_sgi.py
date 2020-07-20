@@ -120,7 +120,7 @@ def create_pipeline(
                 conda=conda,
             ),
             rankSurvivalImpacts(
-                inchannels=["genechunks", "nicer_survtab"],
+                inchannels=["ch_chunks", "nicer_survtab"],
                 outchannels=["interactions", "basestats"],
                 conda=conda,
             ),
@@ -159,44 +159,19 @@ class fetchGeneChunks(nextflowProcess):
     Nextflow process to execute the function below.
     """
 
-    params.index = 'index.csv'
-
-Channel
-    .fromPath(params.index)
-    .splitCsv(header:true)
-    .map{ row-> tuple(row.sampleId, file(row.read1), file(row.read2)) }
-    .set { samples_ch }
-
-process foo {
-    input:
-    set sampleId, file(read1), file(read2) from samples_ch
-
-    script:
-    """
-    echo your_command --sample $sampleId --reads $read1 $read2
-    """
-}
-
     def dependencies(self):
         return {
             "imports": [
-                "import numpy as np",
-                "from typing import Union, Tuple",
-                "from cancerGenoMiner import par_examples, gdc_features, survival_tools, xena_tools, gex_tools",
+                "from typing import Union",
+                "from cancerGenoMiner import par_examples, gex_tools",
             ],
-            "inhouse_packages": [cgm_folder, intro_folder, drive_folder],
+            "inhouse_packages": [cgm_folder, intro_folder],
         }
-
-    def channel_pretreat(self):
-        return [
-            ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
-        ]
 
     def channel_specifications(self):
         return {
-            "nicer_survtab": ("each", "survtab", "survival_table", None, False),
             "cohorts": ("val", "cohort", "cohort", None, True,),
-            "genechunks": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
+            "genechunks": ("file", '"gene_chunks.tsv"', "outFile", None, False,),
         }
 
     def customize_features(self):
@@ -216,169 +191,36 @@ process foo {
     def process(
         self,
         *,
+        cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        phenotype_prefix: str = par_examples.phenotypetag,
-        cohort: str = par_examples.cohort,
-        geneslice: int = 5,#00,
-        survival_table: Union[None, str] = None,
-        probemap: str = par_examples.probemap,
-    ) -> Tuple[gex_tools.pd.DataFrame, str]:
+        chunk_size: int = 5,#00,
+        ) -> list:
 
         """
-        Check the impact of other genes on survival benefit or disadvantage of a gene.
+        Retrieve all genes in the gex datasets in chunks.
 
         Parameters
         ----------
+        cohort
+            The TCGA cohort to check.
         xena_hub
             Url of the data repository hub.
         gex_prefix
             Constant part of the gene expression dataset name.
-        phenotype_prefix
-            Constant part of the clinical phenotype dataset name.
-        cohort
-            The TCGA cohort to check.
-        geneslice
-            The size of gene batches to be querried.
-        survival_table
-            Manual curated survival data outside the scope of UCSC Xena.
-        probemap
-            A probemap file for testing direct table download.
-        
+        chunk_size
+            Number of genes to be grouped together.
+
         Returns
         -------
-        Interaction weights on a given gene for every gene in the genome.
-        
+        List of evenly sized gene lists, with cohort being the first element.
         """
 
-        dataset = cohort + phenotype_prefix
-        gex_dataset = cohort + gex_prefix
-        ch = ""
-        if len(cohort.split("-")) > 1:
-            ch = cohort.split("-")[1]
-
-        ### Retrieve clinical information
-        if survival_table in ["None", None]:
-            clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
-            clinicals = xena_tools.fix_phenotype_factorlevels(
-                clinicals,
-                xena_hub,
-                dataset,
-                "sample_type.samples",
-                leveldict={"NaN": "NaN"},
-            )
-            clinicals = clinicals.loc[
-                clinicals["sample_type.samples"].isin(gdc_features.gdc_any_tumor), :
-            ]
-            clinicals = survival_tools.fix_gdc_survival_categories(
-                clinicals, xena_hub, dataset
-            )
-        else:
-            clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
-            clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
-            clinicals = clinicals.set_index("sample")
-
-        ### Retrieve a list of all genes
-        allgenes = np.array(
-            xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
-        )
-        N_genes = allgenes.shape[0]
-        gsn = int(allgenes.shape[0] / geneslice)
-        rest = allgenes[geneslice * gsn :]
-        geneslices = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
-        geneslices.append(rest.tolist())
-        allgenes = allgenes[:2]  ### For testing only!!!
-        geneslices = geneslices[:2]  ### For testing only!!!
-
-        ### Create a mapping for ENS gene codes
-        probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
-        probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
-
-        for symbol in allgenes:
-
-            ### Add data on the expression of the focus gene
-            cg = gex_tools.add_gene_expression_by_probes(
-                [symbol], clinicals, xena_hub, gex_dataset
-            )
-            cg = cg.loc[cg["gex_" + symbol] != "NaN", :]
-            cg = gex_tools.split_by_gex_median(cg, symbol)
-            mask = cg["cat_" + symbol] == "low"
-
-            ### Decide if expression of the gene is favorable (higher expression -> better prognosis -> -1)
-            acceleration = survival_tools.signedByMedianSurvival(cg["time"], cg["event"], mask)
-
-            ### Make stats on survival curve
-            try:
-                stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
-                basestat = acceleration * np.log10(stat.p_value) # positive stat means favourable effect on survival
-            except:
-                basestat = 0.0
-            records = []
-
-            ### Loop through genes in chunks
-            for chunk in geneslices:
-                etdf = gex_tools.add_gene_expression_by_probes(
-                    chunk, cg, xena_hub, gex_dataset
-                )
-                for i, interactor in enumerate(chunk):
-                    tdf = gex_tools.split_by_gex_median(etdf, interactor)
-                    bmask = tdf["cat_" + symbol] == "low"
-                    imask = tdf["cat_" + interactor] == "low"
-                    try:
-                        interactor_enables = (
-                            -1
-                            * np.log10(
-                                survival_tools.logRankSurvival(
-                                    tdf["time"],
-                                    tdf["event"],
-                                    (~imask & bmask),
-                                    alternative_mask=(~imask & ~bmask),
-                                ).p_value
-                            )
-                            - basestat
-                        )
-                    except:
-                        interactor_enables = 0.0
-                    try:
-                        interactor_inhibits = (
-                            -1
-                            * np.log10(
-                                survival_tools.logRankSurvival(
-                                    tdf["time"],
-                                    tdf["event"],
-                                    (imask & bmask),
-                                    alternative_mask=(imask & ~bmask),
-                                ).p_value
-                            )
-                            - basestat
-                        )
-                    except:
-                        interactor_inhibits = 0.0
-                    if basestat < 0:
-                        interactor_enables *= -1
-                        interactor_inhibits *= -1
-                    records.append(
-                        (
-                            cohort,
-                            probedict[symbol],
-                            interactor,
-                            interactor_enables,
-                            interactor_inhibits,
-                        )
-                    )
-        records = gex_tools.pd.DataFrame(
-            records,
-            columns=[
-                "cohort",
-                "symbol",
-                "interactor",
-                "interactor_enables",
-                "interactor_inhibits",
-            ],
-        )
-        records["interactor"] = records["interactor"].map(probedict)
-
-        return records
+        gene_chunks = gex_tools.create_gene_chunks(cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=chunk_size)
+        ch_chunks = []
+        for e in gene_chunks:
+            ch_chunks.append([cohort, ",".join(e)])
+        return ch_chunks
 
 class rankSurvivalImpacts(nextflowProcess):
     """
@@ -398,12 +240,13 @@ class rankSurvivalImpacts(nextflowProcess):
     def channel_pretreat(self):
         return [
             ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
+            ["genechunks", "collectFile(name: 'chunks.tsv', newLine: true)", ".splitCsv(header: '\t')", "set{ch_chunks}",],
         ]
 
     def channel_specifications(self):
         return {
             "nicer_survtab": ("each", "survtab", "survival_table", None, False),
-            "cohorts": ("val", "cohort", "cohort", None, True,),
+            "ch_chunks": ("tuple", ("cohort", "genes"), ("cohort", "genes"), None, False,),
             "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
         }
 
@@ -424,11 +267,12 @@ class rankSurvivalImpacts(nextflowProcess):
     def process(
         self,
         *,
+        genes: str = par_examples.prognosis_genes,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        geneslice: int = 5,#00,
+        ichunk_size: int = 5,#00,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
@@ -438,6 +282,8 @@ class rankSurvivalImpacts(nextflowProcess):
 
         Parameters
         ----------
+        genes
+            Genes to check as base nodes.
         xena_hub
             Url of the data repository hub.
         gex_prefix
@@ -455,7 +301,7 @@ class rankSurvivalImpacts(nextflowProcess):
         
         Returns
         -------
-        Interaction weights on a given gene for every gene in the genome.
+        Interaction weights on the given genes for every gene in the genome.
         
         """
 
@@ -486,23 +332,13 @@ class rankSurvivalImpacts(nextflowProcess):
             clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
             clinicals = clinicals.set_index("sample")
 
-        ### Retrieve a list of all genes
-        allgenes = np.array(
-            xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
-        )
-        N_genes = allgenes.shape[0]
-        gsn = int(allgenes.shape[0] / geneslice)
-        rest = allgenes[geneslice * gsn :]
-        geneslices = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
-        geneslices.append(rest.tolist())
-        allgenes = allgenes[:2]  ### For testing only!!!
-        geneslices = geneslices[:2]  ### For testing only!!!
+        geneslices = gex_tools.create_gene_chunks(cohort, xena_hub=xena_hub, gex_prefix=gex_prefix, chunk_size=ichunk_size)
 
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
         probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
 
-        for symbol in allgenes:
+        for symbol in genes:
 
             ### Add data on the expression of the focus gene
             cg = gex_tools.add_gene_expression_by_probes(
@@ -523,7 +359,7 @@ class rankSurvivalImpacts(nextflowProcess):
                 basestat = 0.0
             records = []
 
-            ### Loop through genes in chunks
+            ### Loop through interactor genes in chunks
             for chunk in geneslices:
                 etdf = gex_tools.add_gene_expression_by_probes(
                     chunk, cg, xena_hub, gex_dataset

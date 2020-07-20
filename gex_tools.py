@@ -14,6 +14,7 @@ __name__, __package__, invoked_directly = introSpect.cmdSupport(
 hint = introSpect.hint
 
 import pandas as pd
+import numpy as np
 import xenaPython as xena
 from typing import Union, Tuple, List, Sequence
 from . import par_examples, xena_tools
@@ -321,39 +322,41 @@ def add_gene_expression_by_genes(
     
 
 def create_gene_chunks(
-    xena_hub: str,
-    ds: str,
+    cohort: str,
     *,
+    xena_hub: str = par_examples.xena_hub,
+    gex_prefix: str = par_examples.gextag,
     chunk_size: int = 500,
-) -> pd.DataFrame:
+) -> list:
 
     """
     Retrieve all genes in the gex datasets in chunks.
 
     Parameters
     ----------
+    cohort
+        The TCGA cohort to check.
     xena_hub
         Url of the data repository hub.
-    ds
-        Name of the gene expression dataset (cohort) on the repository hub.
+    gex_prefix
+        Constant part of the gene expression dataset name.
     chunk_size
         Number of genes to be grouped together.
 
     Returns
     -------
-    Dataframe with dataset (cohort) as first column, chunks as second.
+    List of evenly sized gene lists.
     """
 
     allgenes = np.array(
-        xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
+        xena_tools.xena.dataset_field_examples(xena_hub, cohort + gex_prefix, None)
     )
     N_genes = allgenes.shape[0]
-    gsn = int(allgenes.shape[0] / geneslice)
-    rest = allgenes[geneslice * gsn :]
-    geneslices = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
-    geneslices.append(rest.tolist())
-    allgenes = allgenes[:2]  ### For testing only!!!
+    gsn = int(allgenes.shape[0] / chunk_size)
+    rest = allgenes[chunk_size * gsn :]
+    geneslices = allgenes[: chunk_size * gsn].reshape(-1, chunk_size).tolist()
     geneslices = geneslices[:2]  ### For testing only!!!
+    geneslices.append(rest.tolist())
     return geneslices
 
 
