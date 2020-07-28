@@ -358,6 +358,7 @@ def create_gene_chunks(
     if rest[-1] == "sampleID":
         rest.pop()
     geneslices = allgenes[: chunk_size * gsn].reshape(-1, chunk_size).tolist()
+    geneslices = geneslices[:2]
     geneslices.append(rest)
     return geneslices
 
