@@ -196,7 +196,7 @@ class fetchGeneChunks(nextflowProcess):
         cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        chunk_size: int = 5,
+        chunk_size: int = 2,
     ) -> list:
 
         """
@@ -224,6 +224,7 @@ class fetchGeneChunks(nextflowProcess):
         ch_chunks = []
         for e in gene_chunks:
             ch_chunks.append([cohort, ",".join(e)])
+        ch_chunks = ch_chunks[:2] #TODO: remove later!
         return ch_chunks
 
 
@@ -297,7 +298,7 @@ class rankSurvivalImpacts(nextflowProcess):
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        ichunk_size: int = 5,
+        ichunk_size: int = 4000,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
     ) -> Tuple[gex_tools.pd.DataFrame, str]:

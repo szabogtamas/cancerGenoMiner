@@ -326,7 +326,7 @@ def create_gene_chunks(
     *,
     xena_hub: str = par_examples.xena_hub,
     gex_prefix: str = par_examples.gextag,
-    chunk_size: int = 5#,00,
+    chunk_size: int = 500,
 ) -> list:
 
     """
@@ -355,10 +355,13 @@ def create_gene_chunks(
     gsn = int(allgenes.shape[0] / chunk_size)
     rest = allgenes[chunk_size * gsn :]
     rest = rest.tolist()
-    if rest[-1] == "sampleID":
-        rest.pop()
+    try:
+        if rest[-1] == "sampleID":
+            rest.pop()
+    except:
+        pass
     geneslices = allgenes[: chunk_size * gsn].reshape(-1, chunk_size).tolist()
-    geneslices = geneslices[:2]
+    #geneslices = geneslices[:2]
     geneslices.append(rest)
     return geneslices
 
