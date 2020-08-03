@@ -326,7 +326,7 @@ def create_gene_chunks(
     *,
     xena_hub: str = par_examples.xena_hub,
     gex_prefix: str = par_examples.gextag,
-    chunk_size: int = 500,
+    chunk_size: int = 5#,00,
 ) -> list:
 
     """

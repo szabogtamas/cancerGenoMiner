@@ -118,12 +118,17 @@ def create_pipeline(
             ),
             rankSurvivalImpacts(
                 inchannels=["ch_chunks", "nicer_survtab"],
-                outchannels=["interactions", "basestats"],
+                outchannels=["interactions", "basegenestat"],
                 conda=conda,
             ),
             collectInteractionWeights(
                 inchannels=["suminteractions"],
                 outchannels=["sortinteractions"],
+                conda=conda,
+            ),
+            collectBaseStats(
+                inchannels=["basegenestats"],
+                outchannels=["basestats"],
                 conda=conda,
             ),
         ]
@@ -191,7 +196,7 @@ class fetchGeneChunks(nextflowProcess):
         cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        chunk_size: int = 500,
+        chunk_size: int = 5,
     ) -> list:
 
         """
@@ -259,6 +264,7 @@ class rankSurvivalImpacts(nextflowProcess):
                 False,
             ),
             "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
+            "basegenestat": ("file", '"${cohort}_base.tsv"', "basegenestat", None, False,),
         }
 
     def customize_features(self):
@@ -269,7 +275,15 @@ class rankSurvivalImpacts(nextflowProcess):
                 "--outFile",
                 {
                     "dest": "outFile",
-                    "help": "Location where results should be saved. If not specified, STDOUT will be used.",
+                    "help": "Main output, the interaction weights.",
+                },
+            ),
+            "basegenestat": (
+                2,
+                "--basegenestat",
+                {
+                    "dest": "basegenestat",
+                    "help": "File where to store the base statistics for each gene.",
                 },
             )
         }
@@ -283,7 +297,7 @@ class rankSurvivalImpacts(nextflowProcess):
         gex_prefix: str = par_examples.gextag,
         phenotype_prefix: str = par_examples.phenotypetag,
         cohort: str = par_examples.cohort,
-        ichunk_size: int = 500,
+        ichunk_size: int = 5,
         survival_table: Union[None, str] = None,
         probemap: str = par_examples.probemap,
     ) -> Tuple[gex_tools.pd.DataFrame, str]:
@@ -323,7 +337,6 @@ class rankSurvivalImpacts(nextflowProcess):
             ch = cohort.split("-")[1]
 
         ### Retrieve clinical information
-        # TODO: always use the local, prefetched copy for clinicals?
         if survival_table in ["None", None]:
             clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
             clinicals = xena_tools.fix_phenotype_factorlevels(
@@ -351,8 +364,12 @@ class rankSurvivalImpacts(nextflowProcess):
         ### Create a mapping for ENS gene codes
         probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
         probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
+        records, gstats = [], []
 
         for symbol in genes:
+            cg = gex_tools.add_gene_expression_by_probes(
+                [symbol], clinicals, xena_hub, gex_dataset
+            )
 
             ### Add data on the expression of the focus gene
             cg = gex_tools.add_gene_expression_by_probes(
@@ -377,7 +394,6 @@ class rankSurvivalImpacts(nextflowProcess):
             except:
                 acceleration = 1.0
                 basestat = 0.0
-            records = []
 
             ### Loop through interactor genes in chunks
             for chunk in geneslices:
@@ -440,6 +456,13 @@ class rankSurvivalImpacts(nextflowProcess):
                             interactor_inhibits,
                         )
                     )
+            gstats.append(
+                (
+                    cohort,
+                    probedict[symbol],
+                    basestat,
+                )
+            )
         records = gex_tools.pd.DataFrame(
             records,
             columns=[
@@ -451,8 +474,15 @@ class rankSurvivalImpacts(nextflowProcess):
             ],
         )
         records["interactor"] = records["interactor"].map(probedict)
-
-        return records
+        gstats = gex_tools.pd.DataFrame(
+            gstats,
+            columns=[
+                "cohort",
+                "symbol",
+                "survival_impact",
+            ],
+        )
+        return records, gstats
 
 
 class collectInteractionWeights(nextflowProcess):
@@ -540,6 +570,65 @@ class collectInteractionWeights(nextflowProcess):
             ],
         ]
         return interactions
+
+class collectBaseStats(collectInteractionWeights):
+    """
+    Nextflow process to execute the function below.
+    """
+
+    def channel_pretreat(self):
+        return [
+            [
+                "basegenestat",
+                "collectFile(keepHeader: true) { item -> [item.getName(), item] }",
+                "map { [it.baseName, it] }",
+                "set{basegenestats}",
+            ],
+        ]
+
+    def channel_specifications(self):
+        return {
+            "basegenestats": (
+                "tuple",
+                ("cohort", '"${cohort}.tsv"'),
+                (None, "stattable"),
+                None,
+                False,
+            ),
+            "basestats": ("file", '"${cohort}_stats.tsv"', "outFile", None, False),
+        }
+
+    def process(
+        self, *, stattable: str = "raw_stats.tsv",
+    ) -> gex_tools.pd.DataFrame:
+
+        """
+        Collect survival impact stats sorted by rank.
+
+        Parameters
+        ----------
+        stattable
+            File name of data table.
+        
+        Returns
+        -------
+        Base statistics on survival impact.
+        
+        """
+
+        stats = gex_tools.pd.read_csv(stattable, sep="\t")
+        stats = stats.sort_values(
+            by="survival_impact", ascending=False
+        ).reset_index()
+        stats = stats.loc[
+            :,
+            [
+                "cohort",
+                "symbol",
+                "survival_impact",
+            ],
+        ]
+        return stats
 
 
 def main():
