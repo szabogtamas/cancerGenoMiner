@@ -138,7 +138,7 @@ def create_pipeline(
         *nodes,
         main_kws=main_kws,
         location=location + "/pipeline",
-        queueRestriction=30,
+        queueRestriction=40,
         generalSettings=general_configs,
         containerPaths=container_paths,
         verbose=verbose,
@@ -224,6 +224,7 @@ class fetchGeneChunks(nextflowProcess):
         ch_chunks = []
         for e in gene_chunks:
             ch_chunks.append([cohort, ",".join(e)])
+        ch_chunks = ch_chunks[:2]
         return ch_chunks
 
 
