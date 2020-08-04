@@ -196,7 +196,7 @@ class fetchGeneChunks(nextflowProcess):
         cohort: str = par_examples.cohort,
         xena_hub: str = par_examples.xena_hub,
         gex_prefix: str = par_examples.gextag,
-        chunk_size: int = 2,
+        chunk_size: int = 5,
     ) -> list:
 
         """
@@ -224,7 +224,6 @@ class fetchGeneChunks(nextflowProcess):
         ch_chunks = []
         for e in gene_chunks:
             ch_chunks.append([cohort, ",".join(e)])
-        ch_chunks = ch_chunks[:2] #TODO: remove later!
         return ch_chunks
 
 

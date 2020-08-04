@@ -361,7 +361,6 @@ def create_gene_chunks(
     except:
         pass
     geneslices = allgenes[: chunk_size * gsn].reshape(-1, chunk_size).tolist()
-    #geneslices = geneslices[:2]
     geneslices.append(rest)
     return geneslices
 
