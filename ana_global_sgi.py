@@ -224,7 +224,6 @@ class fetchGeneChunks(nextflowProcess):
         ch_chunks = []
         for e in gene_chunks:
             ch_chunks.append([cohort, ",".join(e)])
-        ch_chunks = ch_chunks[:2]
         return ch_chunks
 
 
