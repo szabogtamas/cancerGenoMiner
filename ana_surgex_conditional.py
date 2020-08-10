@@ -297,6 +297,8 @@ class rankSurvivalImpacts(nextflowProcess):
         """
 
         # TODO: This module should introduce the second factor (p53 mutations, or CA20 score). The question is if this factor should be just a list of IDs or a dataframe, or a Series of actual values
+        # The list of sample IDs should be read from a file
+        
         dataset = cohort + phenotype_prefix
         gex_dataset = cohort + gex_prefix
         gene = gene.replace('"', "")
