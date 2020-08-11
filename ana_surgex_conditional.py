@@ -51,6 +51,13 @@ default_main_kws = {
     "fn": "survival_table.tsv",
 }
 
+
+def enlist_process_nodes(nodes, conda):
+    nodes = [introSpect.flowNodes.helloWorld(inchannels=["cheers"])]
+    return nodes
+
+
+ana_surgex_single.enlist_process_nodes = enlist_process_nodes
 ana_surgex_single.default_main_kws = default_main_kws
 create_pipeline = ana_surgex_single.create_pipeline
 

@@ -50,70 +50,23 @@ default_main_kws = {
 }
 
 
-def create_pipeline(
-    *,
-    location: str = os.getcwd(),
-    nodes: Union[None, str] = None,
-    main_kws: Union[None, dict] = None,
-    comment_on_methods: Union[None, str] = None,
-    comment_location: Union[None, str] = None,
-    conda: Union[None, str] = None,
-    general_configs: Union[None, dict] = None,
-    container_paths: Union[None, dict] = None,
-    verbose: bool = True,
-) -> str:
+def enlist_process_nodes(nodes: Union[None, list], conda: Union[None, str]) -> list:
     """
-    Create a Nextflow pipeline that take a list of genes and a list of cohorts, compares
-    survival in high and low expression groups, plots a heatmap of survival impact and 
-    also Kaplan-Meier plots for each gene in every cohort.
+    Helper function returning a list of initialized process objects. Node list and conda
+    location gets passed to this function by the pipeline creator function.
 
     Parameters
     ----------
-    location
-        Path where the pipeline directory should be created.
     nodes
-        Objects that define processes as nodes linked by Nextflow.
-    main_kws
-        Initial pipeline parameters. Uses a global variable called `default_main_kws`!
-    comment_on_methods
-        Description of methods.
+        Objects that define processes as nodes linked by Nextflow. If set to None, it
+        checks for globally defined node list.
     conda
         Path to a yaml file to be used during environment creation or the conda dir.
-    general_configs
-        Settings in the nextflow config file that apply to the whole pipeline in general.
-    container_paths
-        Paths to containers defined by their Dockerhub link. Gets automatically updated
-        if an image is built, but adding a path here avoids rebuilding existing images.
-    verbose
-        Flag to turn on messages displaying intermediate results.
     
     Returns
     -------
-    Body of the nextflow script
+    List of initialized process objects
     """
-
-    ### Define the main parameters for the Nextflow script
-    if "default_main_kws" in globals():
-        global default_main_kws
-    else:
-        default_main_kws = dict()
-    if main_kws is None:
-        main_kws = dict()
-    default_main_kws.update(main_kws)
-    main_kws = default_main_kws.copy()
-
-    if container_paths is None:
-        container_paths = dict()
-
-    ### Set the Conda environment
-    if conda is None:
-        os.makedirs(location + "/pipeline", exist_ok=True)
-        conda = location + "/pipeline/environment.yml"
-        with open(conda, "w") as f:
-            f.write(environment_definiton.environment)
-        conda = "'" + conda + "'"
-
-    ### Add processes to the Nextflow pipeline
     if nodes is None:
         nodes = [
             fetchClinicalFile(
@@ -172,8 +125,75 @@ def create_pipeline(
             ),
             pdfFromLatex(),
         ]
+    return nodes
 
-    ### Compile the pipeline into a temporary folder
+
+def create_pipeline(
+    *,
+    location: str = os.getcwd(),
+    nodes: Union[None, list] = None,
+    main_kws: Union[None, dict] = None,
+    comment_on_methods: Union[None, str] = None,
+    comment_location: Union[None, str] = None,
+    conda: Union[None, str] = None,
+    general_configs: Union[None, dict] = None,
+    container_paths: Union[None, dict] = None,
+    verbose: bool = True,
+) -> str:
+    """
+    Create a Nextflow pipeline that take a list of genes and a list of cohorts, compares
+    survival in high and low expression groups, plots a heatmap of survival impact and 
+    also Kaplan-Meier plots for each gene in every cohort.
+
+    Parameters
+    ----------
+    location
+        Path where the pipeline directory should be created.
+    nodes
+        Objects that define processes as nodes linked by Nextflow. If set to None, it
+        checks for globally defined node list.
+    main_kws
+        Initial pipeline parameters. Uses a global variable called `default_main_kws`!
+    comment_on_methods
+        Description of methods.
+    conda
+        Path to a yaml file to be used during environment creation or the conda dir.
+    general_configs
+        Settings in the nextflow config file that apply to the whole pipeline in general.
+    container_paths
+        Paths to containers defined by their Dockerhub link. Gets automatically updated
+        if an image is built, but adding a path here avoids rebuilding existing images.
+    verbose
+        Flag to turn on messages displaying intermediate results.
+    
+    Returns
+    -------
+    Body of the nextflow script
+    """
+
+    ### Define the main parameters for the Nextflow script
+    if "default_main_kws" in globals():
+        global default_main_kws
+    else:
+        default_main_kws = dict()
+    if main_kws is None:
+        main_kws = dict()
+    default_main_kws.update(main_kws)
+    main_kws = default_main_kws.copy()
+
+    if container_paths is None:
+        container_paths = dict()
+
+    ### Set the Conda environment
+    if conda is None:
+        os.makedirs(location + "/pipeline", exist_ok=True)
+        conda = location + "/pipeline/environment.yml"
+        with open(conda, "w") as f:
+            f.write(environment_definiton.environment)
+        conda = "'" + conda + "'"
+
+    ### Add process nodes and compile the pipeline into a temporary folder
+    nodes = enlist_process_nodes(nodes, conda)
     introSpect.flowNodes.channelNodes(
         *nodes,
         main_kws=main_kws,
@@ -198,6 +218,7 @@ def create_pipeline(
         comment_on_methods = ""
     with open(comment_location, "w") as f:
         f.write(comment_on_methods)
+
     return os.path.dirname(location + "/pipeline/main.nf")
 
 
