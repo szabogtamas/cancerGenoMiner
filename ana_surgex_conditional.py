@@ -40,6 +40,7 @@ default_main_kws = {
     "genes": par_examples.prognosis_genes,
     "genedict": {"NaN": "NaN"},  # par_examples.prognosis_genecodes,
     "survtab": "None",
+    "conditiontab": "None",
     "report_title": '"Title of report"',
     "author_name": '"Author"',
     "lab_name": '"Laboratory or PI"',

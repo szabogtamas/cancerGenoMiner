@@ -186,7 +186,7 @@ def create_pipeline(
 
     ### Small adjustments to get comment locations right
     if comment_location is None:
-        if comments in main_kws:
+        if "comments" in main_kws:
             comment_location = main_kws["comments"]
         else:
             comment_location = os.getcwd() + "/pipeline/comments.tex"
