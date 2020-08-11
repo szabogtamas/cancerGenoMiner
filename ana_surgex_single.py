@@ -34,13 +34,29 @@ cgm_folder = os.path.dirname(os.path.realpath(gex_tools.__file__))
 intro_folder = os.path.dirname(os.path.realpath(introSpect.__file__))
 drive_folder = os.path.dirname(os.path.realpath(connectDrive.__file__))
 
+default_main_kws = {
+    "cohorts": [par_examples.cohort] + par_examples.lung_cohorts,
+    "genes": par_examples.prognosis_genes,
+    "genedict": {"NaN": "NaN"},  # par_examples.prognosis_genecodes,
+    "survtab": "None",
+    "report_title": '"Title of report"',
+    "author_name": '"Author"',
+    "lab_name": '"Laboratory or PI"',
+    "bibliography": "biblio.bib",
+    "slidesfile": "figures.pptx",
+    "comments": os.getcwd() + "/pipeline/comments.tex",
+    "mpl_backend": "pgf",
+    "fn": "survival_table.tsv",
+}
 
 def create_pipeline(
     *,
     location: str = os.getcwd(),
     nodes: Union[None, str] = None,
     main_kws: Union[None, dict] = None,
+    default_main_kws: dict = default_main_kws,
     comment_on_methods: Union[None, str] = None,
+    comment_location: Union[None, str] = None,
     conda: Union[None, str] = None,
     general_configs: Union[None, dict] = None,
     container_paths: Union[None, dict] = None,
@@ -59,6 +75,8 @@ def create_pipeline(
         Objects that define processes as nodes linked by Nextflow.
     main_kws
         Initial pipeline parameters.
+    default_main_kws
+        The default values for main keywords.
     comment_on_methods
         Description of methods.
     conda
@@ -77,21 +95,10 @@ def create_pipeline(
     """
 
     ### Define the main parameters for the Nextflow script
-    comment_location = location + "/pipeline/comments.tex"
-    default_main_kws = {
-        "cohorts": [par_examples.cohort] + par_examples.lung_cohorts,
-        "genes": par_examples.prognosis_genes,
-        "genedict": {"NaN": "NaN"},  # par_examples.prognosis_genecodes,
-        "survtab": "None",
-        "report_title": '"Title of report"',
-        "author_name": '"Author"',
-        "lab_name": '"Laboratory or PI"',
-        "bibliography": "biblio.bib",
-        "slidesfile": "figures.pptx",
-        "comments": comment_location,
-        "mpl_backend": "pgf",
-        "fn": "survival_table.tsv",
-    }
+    if comment_location is None:
+        comment_location = default_main_kws["comments"]
+    else:
+        default_main_kws["comments"] = comment_location
 
     if main_kws is None:
         main_kws = dict()
