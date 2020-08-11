@@ -49,12 +49,12 @@ default_main_kws = {
     "fn": "survival_table.tsv",
 }
 
+
 def create_pipeline(
     *,
     location: str = os.getcwd(),
     nodes: Union[None, str] = None,
     main_kws: Union[None, dict] = None,
-    default_main_kws: dict = default_main_kws,
     comment_on_methods: Union[None, str] = None,
     comment_location: Union[None, str] = None,
     conda: Union[None, str] = None,
@@ -74,9 +74,7 @@ def create_pipeline(
     nodes
         Objects that define processes as nodes linked by Nextflow.
     main_kws
-        Initial pipeline parameters.
-    default_main_kws
-        The default values for main keywords.
+        Initial pipeline parameters. Uses a global variable called `default_main_kws`!
     comment_on_methods
         Description of methods.
     conda
@@ -95,11 +93,10 @@ def create_pipeline(
     """
 
     ### Define the main parameters for the Nextflow script
-    if comment_location is None:
-        comment_location = default_main_kws["comments"]
+    if "default_main_kws" in globals():
+        global default_main_kws
     else:
-        default_main_kws["comments"] = comment_location
-
+        default_main_kws = dict()
     if main_kws is None:
         main_kws = dict()
     default_main_kws.update(main_kws)
@@ -186,6 +183,15 @@ def create_pipeline(
         verbose=verbose,
     )
     hint(verbose, "Pipeline compiled to folder")
+
+    ### Small adjustments to get comment locations right
+    if comment_location is None:
+        if comments in main_kws:
+            comment_location = main_kws["comments"]
+        else:
+            comment_location = os.getcwd() + "/pipeline/comments.tex"
+    else:
+        main_kws["comments"] = comment_location
 
     ### Save comments to a file
     if comment_on_methods is None:

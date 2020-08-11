@@ -127,9 +127,7 @@ def create_pipeline(
                 conda=conda,
             ),
             collectBaseStats(
-                inchannels=["basegenestats"],
-                outchannels=["basestats"],
-                conda=conda,
+                inchannels=["basegenestats"], outchannels=["basestats"], conda=conda,
             ),
         ]
 
@@ -264,7 +262,13 @@ class rankSurvivalImpacts(nextflowProcess):
                 False,
             ),
             "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
-            "basegenestat": ("file", '"${cohort}_base.tsv"', "basegenestat", None, False,),
+            "basegenestat": (
+                "file",
+                '"${cohort}_base.tsv"',
+                "basegenestat",
+                None,
+                False,
+            ),
         }
 
     def customize_features(self):
@@ -273,10 +277,7 @@ class rankSurvivalImpacts(nextflowProcess):
                 1,
                 "-o",
                 "--outFile",
-                {
-                    "dest": "outFile",
-                    "help": "Main output, the interaction weights.",
-                },
+                {"dest": "outFile", "help": "Main output, the interaction weights.",},
             ),
             "basegenestat": (
                 2,
@@ -285,7 +286,7 @@ class rankSurvivalImpacts(nextflowProcess):
                     "dest": "basegenestat",
                     "help": "File where to store the base statistics for each gene.",
                 },
-            )
+            ),
         }
         return None
 
@@ -456,13 +457,7 @@ class rankSurvivalImpacts(nextflowProcess):
                             interactor_inhibits,
                         )
                     )
-            gstats.append(
-                (
-                    cohort,
-                    probedict[symbol],
-                    basestat,
-                )
-            )
+            gstats.append((cohort, probedict[symbol], basestat,))
         records = gex_tools.pd.DataFrame(
             records,
             columns=[
@@ -475,12 +470,7 @@ class rankSurvivalImpacts(nextflowProcess):
         )
         records["interactor"] = records["interactor"].map(probedict)
         gstats = gex_tools.pd.DataFrame(
-            gstats,
-            columns=[
-                "cohort",
-                "symbol",
-                "survival_impact",
-            ],
+            gstats, columns=["cohort", "symbol", "survival_impact",],
         )
         return records, gstats
 
@@ -571,6 +561,7 @@ class collectInteractionWeights(nextflowProcess):
         ]
         return interactions
 
+
 class collectBaseStats(collectInteractionWeights):
     """
     Nextflow process to execute the function below.
@@ -598,9 +589,7 @@ class collectBaseStats(collectInteractionWeights):
             "basestats": ("file", '"${cohort}_stats.tsv"', "outFile", None, False),
         }
 
-    def process(
-        self, *, stattable: str = "raw_stats.tsv",
-    ) -> gex_tools.pd.DataFrame:
+    def process(self, *, stattable: str = "raw_stats.tsv",) -> gex_tools.pd.DataFrame:
 
         """
         Collect survival impact stats sorted by rank.
@@ -617,16 +606,9 @@ class collectBaseStats(collectInteractionWeights):
         """
 
         stats = gex_tools.pd.read_csv(stattable, sep="\t")
-        stats = stats.sort_values(
-            by="survival_impact", ascending=False
-        ).reset_index()
+        stats = stats.sort_values(by="survival_impact", ascending=False).reset_index()
         stats = stats.loc[
-            :,
-            [
-                "cohort",
-                "symbol",
-                "survival_impact",
-            ],
+            :, ["cohort", "symbol", "survival_impact",],
         ]
         return stats
 
