@@ -64,8 +64,29 @@ def enlist_process_nodes(
     """
 
     default_nodes = [
-        introSpect.flowNodes.helloWorld(inchannels=["cheers"]),
-        ana_surgex_single.pdfFromLatex(),
+        ana_surgex_single.create_pipeline.fetchClinicalFile(
+            inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
+        ),
+        ana_surgex_single.create_pipeline.getSurvival(
+            inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
+            outchannels=["survivals", "gene_nd"],
+            conda=conda,
+        ),
+        plotSurvival(
+            inchannels=["survivals", "conditiontab", "plotgenes", "symdict", "numplot", "mpl_backend",],
+            outchannels=[
+                "plotnames",
+                "gexnames",
+                "images",
+                "plots",
+                "stats",
+                "titles",
+                "notebooks",
+            ],
+            conda=conda,
+            capture=True,
+        ),
+        #ana_surgex_single.pdfFromLatex(),
     ]
 
     return introSpect.flowNodes.checkNodeReplacements(
@@ -88,11 +109,9 @@ def create_pipeline(**kwargs):
 
 
 create_pipeline.__doc__ = ana_surgex_single.create_pipeline.__doc__
-
 recipe = create_pipeline
 
-
-class rankSurvivalImpacts(nextflowProcess):
+class plotSurvival(nextflowProcess):
     """
     Nextflow process to execute the function below.
     """
@@ -100,33 +119,49 @@ class rankSurvivalImpacts(nextflowProcess):
     def dependencies(self):
         return {
             "imports": [
+                "import scipy",
                 "import numpy as np",
                 "from typing import Union, Tuple",
-                "from cancerGenoMiner import par_examples, gdc_features, survival_tools, xena_tools, gex_tools",
+                "from cancerGenoMiner import par_examples, gdc_features, plotting_tools, survival_tools, xena_tools, gex_tools",
             ],
-            "inhouse_packages": [cgm_folder, intro_folder, drive_folder],
+            "inhouse_packages": [cgm_folder, intro_folder],
         }
 
-    def channel_pretreat(self):
-        return [
-            [
-                "Channel",
-                "from(params.genedict)",
-                "map{it.join('\\t')}",
-                "collectFile(name: 'genedict.tsv', newLine: true)",
-                "set{genedict}",
-            ],
-            ["local_survtab", "map{it.trim()}", "set{nicer_survtab}",],
-        ]
+    def directives(self):
+        return {"publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"'}
 
     def channel_specifications(self):
         return {
-            "genes": ("each", "gene", "gene", None, True),
-            "genedict": ("each", "*genedict", "genedict", None, False),
-            "nicer_survtab": ("each", "survtab", "survival_table", None, False),
-            "cohorts": ("val", "cohort", "cohort", None, True,),
-            "interactions": ("file", '"${cohort}_data.tsv"', "outFile", None, False,),
-            "gene_nd": ("file", "'genedict.tsv'", "gd", None, False),
+            "symdict": ("each", "*symdict", "genedict", None, False),
+            "conditiontab": ("each", "conditiontab", "conditiontab", None, True),
+            "mpl_backend": ("env", "MPLBACK", None, None, True),
+            "plotgenes": ("val", "plotgenes", "genes", None, False),
+            "survivals": (
+                "tuple",
+                (
+                    "note_title",
+                    "note_name",
+                    "plotcohort",
+                    "gexcohort",
+                    '"${plotcohort}_data.tsv"',
+                ),
+                (None, None, "cohort", None, "clinicals"),
+                None,
+                False,
+            ),
+            "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
+            "plotnames": ("val", "plotcohort", "outFile", None, False),
+            "gexnames": ("val", "gexcohort", "gex", None, False),
+            "images": ("file", '"*.png"', None, None, False),
+            "plots": (
+                "tuple",
+                ('"${plotcohort}.pgf"', '"${gexcohort}.pgf"'),
+                (None, None),
+                None,
+                False,
+            ),
+            "titles": ("file", '"${plotcohort}_title.txt"', "titles", None, False),
+            "notebooks": ("file", "note_name", None, None, False),
         }
 
     def customize_features(self):
@@ -140,235 +175,197 @@ class rankSurvivalImpacts(nextflowProcess):
                     "help": "Location where results should be saved. If not specified, STDOUT will be used.",
                 },
             ),
-            "gd": (
+            "lrt": (
                 2,
-                "--gd",
-                {"dest": "gd", "help": "Temporary file to store gene symbol mapping.",},
+                "--lrt",
+                {
+                    "dest": "lrt",
+                    "help": "Temporary file to store results of log-rank test.",
+                },
+            ),
+            "titles": (
+                3,
+                "--titles",
+                {
+                    "dest": "titles",
+                    "help": "Temporary file to store results of page titles.",
+                },
+            ),
+            "gex": (
+                4,
+                "--gex",
+                {"dest": "gex", "help": "Distribution of gene expressions.",},
             ),
         }
+        self.capturepars = ["note_title", "note_name"]
         return None
 
     def process(
         self,
         *,
-        xena_hub: str = par_examples.xena_hub,
-        gex_prefix: str = par_examples.gextag,
-        phenotype_prefix: str = par_examples.phenotypetag,
+        clinicals: str = "",
+        conditiontab: str = "",
         cohort: str = par_examples.cohort,
-        gene: str = par_examples.target_gene,
+        genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
-        geneslice: int = 500,
-        survival_table: Union[None, str] = None,
-        probemap: str = par_examples.probemap,
-        gex_basis: str = "gene",
-    ) -> Tuple[gex_tools.pd.DataFrame, str]:
+        plotrow: int = 5,
+        plotcol: int = 4,
+    ) -> Tuple[
+        plotting_tools.plt.Axes, list, gex_tools.pd.DataFrame, plotting_tools.plt.Axes
+    ]:
 
         """
-        Check the impact of other genes on survival benefit or disadvantage of a gene.
+        A process that plots survival split up by two conditions: typically low vs. high
+        expression of a gene and the presence of mutations in another one.
 
         Parameters
         ----------
-        xena_hub
-            Url of the data repository hub.
-        gex_prefix
-            Constant part of the gene expression dataset name.
-        phenotype_prefix
-            Constant part of the clinical phenotype dataset name.
+        clinicals
+            Data frame with information on both survival and gene expression.
+        conditiontab
+            A list of samples with the seconary condition.
         cohort
             The TCGA cohort to check.
-        gene
-            The gene to be queried.
+        genes
+            The genes to be queried.
         genedict
             A table mapping gene names to gene symbols.
-        geneslice
-            The size of gene batches to be querried.
-        survival_table
-            Manual curated survival data outside the scope of UCSC Xena.
-        probemap
-            A probemap file for testing direct table download.
-        gex_basis
-            If gene average or probe values should be checked Type `probes` for probes.
+        plotrow
+            Number of subplots in a row.
+        plotcol
+            Number of subplots in a column.
         
         Returns
         -------
-        Interaction weights on a given gene for every gene in the genome.
+        Kaplan–Meier plot and distributions of gene expression.
         
         """
 
-        # TODO: This module should introduce the second factor (p53 mutations, or CA20 score). The question is if this factor should be just a list of IDs or a dataframe, or a Series of actual values
-        # The list of sample IDs should be read from a file
-
-        dataset = cohort + phenotype_prefix
-        gex_dataset = cohort + gex_prefix
-        gene = gene.replace('"', "")
-        ch = ""
-        if len(cohort.split("-")) > 1:
-            ch = cohort.split("-")[1]
+        ### Retrieve gene symbols, if available
         if genedict is not None:
-            symbol = gex_tools.map_genenames([gene], genedict)[0]
-            with open(genedict, "r") as f:
-                gd = f.read()
+            symbols = gex_tools.map_genenames(genes, genedict)
         else:
-            symbol = gene[:]
-            gd = "NaN\tNaN"
+            symbols = genes[:]
 
-        ### Retrieve clinical information
-        if survival_table in ["None", None]:
-            clinicals = xena_tools.download_gdc_clinicals(xena_hub, dataset)
-            clinicals = xena_tools.fix_phenotype_factorlevels(
-                clinicals,
-                xena_hub,
-                dataset,
-                "sample_type.samples",
-                leveldict={"NaN": "NaN"},
-            )
-            clinicals = clinicals.loc[
-                clinicals["sample_type.samples"].isin(gdc_features.gdc_any_tumor), :
-            ]
-            clinicals = survival_tools.fix_gdc_survival_categories(
-                clinicals, xena_hub, dataset
+        ### Use diagnosis instead of cohort codes
+        stats = [cohort]
+        if cohort in gdc_features.tcga_cohort_diagnosis:
+            titles = (
+                cohort
+                + "\tImpact of gene expression on survival in "
+                + gdc_features.tcga_cohort_diagnosis[cohort]
+                + " ("
+                + cohort
+                + ")"
             )
         else:
-            clinicals = survival_tools.pd.read_csv(survival_table, sep="\t")
-            clinicals = clinicals.loc[clinicals["type"].isin([cohort, ch]), :]
-            clinicals = clinicals.set_index("sample")
-        if gex_basis == "gene":
-            clinicals = gex_tools.add_gene_expression_by_genes(
-                [symbol], clinicals, xena_hub, gex_dataset
-            )
-        else:
-            clinicals = gex_tools.add_gene_expression_by_probes(
-                [symbol], clinicals, xena_hub, gex_dataset
-            )
+            titles = cohort + "\t" + cohort
 
-        ### Add data on the expression of the focus gene
-        cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
-        cg = gex_tools.split_by_gex_median(cg, symbol)
-        mask = cg["cat_" + symbol] == "low"
-        try:
-            stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
-            basestat = -1 * np.log10(stat.p_value)
-        except:
-            basestat = 0.0
-        records = []
+        ### Read the prefetched data table
+        with open(conditiontab, "r",) as f:
+            mutants = f.read.split("\n")
+        print(,utants[-5:])
 
-        ### Retrieve a list of all genes
-        allgenes = np.array(
-            xena_tools.xena.dataset_field_examples(xena_hub, gex_dataset, None)
-        )
-        N_genes = allgenes.shape[0]
-        gsn = int(allgenes.shape[0] / geneslice)
-        rest = allgenes[geneslice * gsn :]
-        allgenes = allgenes[: geneslice * gsn].reshape(-1, geneslice).tolist()
-        allgenes.append(rest.tolist())
-        # allgenes = allgenes[:2]  ### For testing only!!!
+        ### Read the prefetched data table
+        clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
+        smallclinicals = clinicals.head()
 
-        ### Create a mapping for ENS gene codes
-        probes = xena_tools.read_xena_table(probemap, hubPrefix=xena_hub)
-        probedict = gex_tools.parse_gene_mapping(probes, probecol="gene", genecol="id")
+        ### Plot survival for every gene
+        plt = plotting_tools.plt
+        plotting_tools.set_figure_rc()
+        fig, axs = plt.subplots(plotrow, plotcol)
+        axs = axs.flatten()
 
-        ### Loop through genes in chunks
-        for chunk in allgenes:
-            etdf = gex_tools.add_gene_expression_by_probes(
-                chunk, cg, xena_hub, gex_dataset
-            )
-            for i, interactor in enumerate(chunk):
-                tdf = gex_tools.split_by_gex_median(etdf, interactor)
-                bmask = tdf["cat_" + symbol] == "low"
-                imask = tdf["cat_" + interactor] == "low"
-                try:
-                    stat = survival_tools.logRankSurvival(
-                        tdf["time"], tdf["event"], imask
-                    )
-                    ibasestat = -1 * np.log10(stat.p_value)
-                except:
-                    ibasestat = 0.0
-                try:
-                    focus_enables = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (imask & ~bmask),
-                                alternative_mask=(~imask & ~bmask),
-                            ).p_value
-                        )
-                        - ibasestat
-                    )
-                except:
-                    focus_enables = 0.0
-                try:
-                    focus_inhibits = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (imask & bmask),
-                                alternative_mask=(~imask & bmask),
-                            ).p_value
-                        )
-                        - ibasestat
-                    )
-                except:
-                    focus_inhibits = 0.0
-                try:
-                    interactor_enables = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (~imask & bmask),
-                                alternative_mask=(~imask & ~bmask),
-                            ).p_value
-                        )
-                        - basestat
-                    )
-                except:
-                    interactor_enables = 0.0
-                try:
-                    interactor_inhibits = (
-                        -1
-                        * np.log10(
-                            survival_tools.logRankSurvival(
-                                tdf["time"],
-                                tdf["event"],
-                                (imask & bmask),
-                                alternative_mask=(imask & ~bmask),
-                            ).p_value
-                        )
-                        - basestat
-                    )
-                except:
-                    interactor_inhibits = 0.0
-                records.append(
-                    (
-                        cohort,
-                        symbol,
-                        interactor,
-                        focus_enables,
-                        focus_inhibits,
-                        interactor_enables,
-                        interactor_inhibits,
-                    )
+        for i in range(len(symbols)):
+            gene = genes[i]
+            gene = gene.replace('"', "")
+            symbol = symbols[i]
+            ax = axs[i]
+            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.split_by_gex_median(cg, symbol)
+            mask = cg["cat_" + symbol] == "low"
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
+            try:
+                survival_tools.plotKMpair(
+                    cg, mask, title=gene + symbol, ax=ax, make_legend=False
                 )
-        records = gex_tools.pd.DataFrame(
-            records,
-            columns=[
-                "cohort",
-                "symbol",
-                "interactor",
-                "focus_enables",
-                "focus_inhibits",
-                "interactor_enables",
-                "interactor_inhibits",
-            ],
-        )
-        records["interactor"] = records["interactor"].map(probedict)
+                stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
+                stats.append(-1 * np.log10(stat.p_value))
+            except:
+                ax.text(0.2, 0.5, "Not enough data")
+                ax.set_xlim(0, 1)
+                ax.set_ylim(0, 1)
+                stats.append(0.0)
+        ax = plotting_tools.legend_only(ax=axs[-1])
 
-        return records, gd
+        ### Create prognosis categories based on survival quartiles
+        lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
+        df = ["gex_" + symbol for symbol in symbols]
+        df = clinicals.loc[:, ["time"] + df]
+        df.columns = ["time"] + symbols
+        df = df.melt(id_vars=["time"])
+        df.columns = ["time", "gene", "gex"]
+        df["prognosis"] = df["time"].apply(lambda x: "poor" if x <= lowquart else "")
+        df["prognosis"] = df["prognosis"].astype(str) + df["time"].apply(
+            lambda x: "good" if x >= highquart else ""
+        )
+        df["prognosis"] = df["prognosis"].apply(lambda x: "mild" if x == "" else x)
+
+        ### Plot distribution of gene expression
+        fig, gex = plt.subplots(figsize=(7.2, 3.6))
+        gex = plotting_tools.sns.violinplot(
+            x="gene",
+            y="gex",
+            hue="prognosis",
+            hue_order=["poor", "mild", "good"],
+            data=df,
+            linewidth=0.2,
+            ax=gex,
+        )
+        # gex = plotting_tools.sns.boxplot( x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, whis=np.inf, color="white", linewidth=0.4, ax=gex,)
+        # gex = plotting_tools.sns.stripplot(x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, ax=gex, size=1, jitter=0.3,)
+        pg1 = gex.scatter(0, 0, s=1, label="Poor prognosis")
+        pg2 = gex.scatter(0, 0, s=1, label="Mild prognosis")
+        pg3 = gex.scatter(0, 0, s=1, label="Good prognosis")
+        gex.scatter(0, 0, color="white", s=1)
+        gex.legend(handles=[pg1, pg2, pg3], loc="lower right")
+        gex.set_xticklabels(
+            [item.get_text() for item in gex.get_xticklabels()], rotation=30, ha="right"
+        )
+        gex.set_xlabel("")
+        gex.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
+        gex.set_title(
+            "Gene expression subset by survival quartiles\n(mild prognosis is 2nd and 3rd quartile)",
+            fontsize=9,
+        )
+
+        bottom, top = gex.get_ylim()
+        top = 0.9 * top
+        for i, symbol in enumerate(symbols):
+            t, p = scipy.stats.ttest_ind(
+                df.loc[
+                    (df["prognosis"] == "poor") & (df["gene"] == symbol), "gex"
+                ].tolist(),
+                df.loc[
+                    (df["prognosis"] == "good") & (df["gene"] == symbol), "gex"
+                ].tolist(),
+                equal_var=False,
+            )
+            s = "p={:1.5f}".format(p)
+            if p < 0.05:
+                s = "*"
+                if p < 0.01:
+                    s += "*"
+                    if p < 0.001:
+                        s += "*"
+            else:
+                s = ""
+            gex.text(i, top, s)
+
+        return ax, [["cohort"] + genes, stats], titles, gex
 
 
 def main():

@@ -216,7 +216,7 @@ def create_pipeline(
         containerPaths=container_paths,
         verbose=verbose,
     )
-    hint(verbose, "Pipeline compiled to folder")
+    hint(verbose, "Pipeline compiled to folder", location + "/pipeline")
 
     ### Small adjustments to get comment locations right
     if comment_location is None:
