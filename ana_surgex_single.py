@@ -17,7 +17,7 @@ nextflowProcess = introSpect.flowNodes.nextflowProcess
 
 import scipy
 import numpy as np
-from typing import Union, Tuple
+from typing import Union, Tuple, Callable
 from cancerGenoMiner import (
     environment_definiton,
     par_examples,
@@ -50,16 +50,21 @@ default_main_kws = {
 }
 
 
-def enlist_process_nodes(nodes: Union[None, list], conda: Union[None, str]) -> list:
+def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None, dict], container_paths: Union[None, dict], conda: Union[None, str]) -> list:
     """
-    Helper function returning a list of initialized process objects. Node list and conda
-    location gets passed to this function by the pipeline creator function.
+    Helper function returning a list of initialized process objects. Node list, container
+    and conda locations gets passed to this function by the pipeline creator function.
 
     Parameters
     ----------
     nodes
-        Objects that define processes as nodes linked by Nextflow. If set to None, it
-        checks for globally defined node list.
+        Objects that define processes as nodes linked by Nextflow. If None is supplied,
+        the pipeline will consist of the nodes defined here.
+    replacement_nodes
+        Offers a way of replacing only some processes with custom objects by supplying a
+        dictionary with [name_in_default_list]:[custom node] key: value pairs.
+    container_paths
+        Paths to containers where some processes need to run.
     conda
         Path to a yaml file to be used during environment creation or the conda dir.
     
@@ -67,72 +72,89 @@ def enlist_process_nodes(nodes: Union[None, list], conda: Union[None, str]) -> l
     -------
     List of initialized process objects
     """
+
+    default_nodes = [
+        fetchClinicalFile(
+            inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
+        ),
+        getSurvival(
+            inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
+            outchannels=["survivals", "gene_nd"],
+            conda=conda,
+        ),
+        plotSurvival(
+            inchannels=[
+                "survivals",
+                "plotgenes",
+                "symdict",
+                "numplot",
+                "mpl_backend",
+            ],
+            outchannels=[
+                "plotnames",
+                "gexnames",
+                "images",
+                "plots",
+                "stats",
+                "titles",
+                "notebooks",
+            ],
+            conda=conda,
+            capture=True,
+        ),
+        makeHeatmap(
+            inchannels=["stat", "heatmap_f"],
+            outchannels=["heatmap", "heatimage", "cohort_order"],
+            conda=conda,
+        ),
+        pptFromFigures(conda=conda),
+        getRefs(
+            inchannels=["bibliography", "drive_key"],
+            outchannels=["bibtex"],
+            conda=conda,
+        ),
+        compileReport(
+            inchannels=[
+                "plotsr",
+                "heatmap",
+                "ordered_cohorts",
+                "page_titles",
+                "comments",
+                "bibtex",
+                "report_title",
+                "author_name",
+                "lab_name",
+            ],
+            outchannels=["reportex"],
+            conda=conda,
+        ),
+        pdfFromLatex(),
+    ]
+
+    if replacement_nodes is None:
+        replacement_nodes = dict()
     if nodes is None:
-        nodes = [
-            fetchClinicalFile(
-                inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
-            ),
-            getSurvival(
-                inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
-                outchannels=["survivals", "gene_nd"],
-                conda=conda,
-            ),
-            plotSurvival(
-                inchannels=[
-                    "survivals",
-                    "plotgenes",
-                    "symdict",
-                    "numplot",
-                    "mpl_backend",
-                ],
-                outchannels=[
-                    "plotnames",
-                    "gexnames",
-                    "images",
-                    "plots",
-                    "stats",
-                    "titles",
-                    "notebooks",
-                ],
-                conda=conda,
-                capture=True,
-            ),
-            makeHeatmap(
-                inchannels=["stat", "heatmap_f"],
-                outchannels=["heatmap", "heatimage", "cohort_order"],
-                conda=conda,
-            ),
-            pptFromFigures(conda=conda),
-            getRefs(
-                inchannels=["bibliography", "drive_key"],
-                outchannels=["bibtex"],
-                conda=conda,
-            ),
-            compileReport(
-                inchannels=[
-                    "plotsr",
-                    "heatmap",
-                    "ordered_cohorts",
-                    "page_titles",
-                    "comments",
-                    "bibtex",
-                    "report_title",
-                    "author_name",
-                    "lab_name",
-                ],
-                outchannels=["reportex"],
-                conda=conda,
-            ),
-            pdfFromLatex(),
-        ]
-    return nodes
+        final_nodes = []
+        for node in default_nodes:
+            object_name = node.__class__.__name__
+            if object_name in replacement_nodes:
+                final_nodes.append(replacement_nodes[object_name])
+            else:
+                final_nodes.append(node)
+        return final_nodes
+    else:
+        return nodes
+    
 
 
 def create_pipeline(
     *,
     location: str = os.getcwd(),
     nodes: Union[None, list] = None,
+    node_initializer: Callable = enlist_process_nodes,
+    replacement_nodes: Union[None, dict] = None,
     main_kws: Union[None, dict] = None,
+    default_main_kws: dict = default_main_kws,
     comment_on_methods: Union[None, str] = None,
     comment_location: Union[None, str] = None,
     conda: Union[None, str] = None,
@@ -152,8 +174,16 @@ def create_pipeline(
     nodes
         Objects that define processes as nodes linked by Nextflow. If set to None, it
         checks for globally defined node list.
+    node_initializer
+        A function that takes 4 arguments (nodes, replacement nodes, container paths and
+        conda) and returns a list of initialized node objects.
+    replacement_nodes
+        Offers a way of replacing only some processes with custom objects by supplying a
+        dictionary with [name_in_default_list]:[custom node] key: value pairs.
     main_kws
-        Initial pipeline parameters. Uses a global variable called `default_main_kws`!
+        Initial pipeline parameters.
+    default_main_kws
+        Default values for the initial pipeline parameters.
     comment_on_methods
         Description of methods.
     conda
@@ -172,10 +202,6 @@ def create_pipeline(
     """
 
     ### Define the main parameters for the Nextflow script
-    if "default_main_kws" in globals():
-        global default_main_kws
-    else:
-        default_main_kws = dict()
     if main_kws is None:
         main_kws = dict()
     default_main_kws.update(main_kws)
@@ -193,7 +219,7 @@ def create_pipeline(
         conda = "'" + conda + "'"
 
     ### Add process nodes and compile the pipeline into a temporary folder
-    nodes = enlist_process_nodes(nodes, conda)
+    nodes = enlist_process_nodes(nodes, replacement_nodes, container_paths, conda)
     introSpect.flowNodes.channelNodes(
         *nodes,
         main_kws=main_kws,

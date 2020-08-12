@@ -51,15 +51,49 @@ default_main_kws = {
     "fn": "survival_table.tsv",
 }
 
+default_main_kws = {
+    "zeta": "centaury",
+}
 
-def enlist_process_nodes(nodes, conda):
-    nodes = [introSpect.flowNodes.helloWorld(inchannels=["cheers"])]
-    return nodes
+def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None, dict], container_paths: Union[None, dict], conda: Union[None, str]) -> list:
+    """
+    Helper function returning a list of initialized process objects. Node list, container
+    and conda locations gets passed to this function by the pipeline creator function.
+    """
 
-#TODO: It is not the best strategy to override the parent function. Need to come up with something better. Maybe exec?
-#ana_surgex_single.enlist_process_nodes = enlist_process_nodes
-ana_surgex_single.default_main_kws = default_main_kws
-create_pipeline = ana_surgex_single.create_pipeline
+    default_nodes = [
+        HelloWorld(
+            inchannels=["cheers"]),
+        pdfFromLatex(),
+    ]
+
+    if replacement_nodes is None:
+        replacement_nodes = dict()
+    if nodes is None:
+        final_nodes = []
+        for node in default_nodes:
+            object_name = node.__class__.__name__
+            if object_name in replacement_nodes:
+                final_nodes.append(replacement_nodes[object_name])
+            else:
+                final_nodes.append(node)
+        return final_nodes
+    else:
+        return nodes
+
+
+def create_pipeline(**kwargs):
+    """
+    This just wraps main parameters and nodes defined here into the pipeline creator
+    function of `ana_surgex_single`.
+    """
+
+    kws = {"default_main_kws": default_main_kws, "node_initializer": enlist_process_nodes}
+    kws.update(kwargs)
+    print(kwargs)
+    return ana_surgex_single.create_pipeline(**kws)
+
+create_pipeline.__doc__ = ana_surgex_single.create_pipeline.__doc__
 
 recipe = create_pipeline
 
