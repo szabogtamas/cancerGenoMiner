@@ -219,7 +219,7 @@ def create_pipeline(
         conda = "'" + conda + "'"
 
     ### Add process nodes and compile the pipeline into a temporary folder
-    nodes = enlist_process_nodes(nodes, replacement_nodes, container_paths, conda)
+    nodes = node_initializer(nodes, replacement_nodes, container_paths, conda)
     introSpect.flowNodes.channelNodes(
         *nodes,
         main_kws=main_kws,

@@ -51,10 +51,6 @@ default_main_kws = {
     "fn": "survival_table.tsv",
 }
 
-default_main_kws = {
-    "zeta": "centaury",
-}
-
 def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None, dict], container_paths: Union[None, dict], conda: Union[None, str]) -> list:
     """
     Helper function returning a list of initialized process objects. Node list, container
@@ -62,9 +58,9 @@ def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None
     """
 
     default_nodes = [
-        HelloWorld(
+        introSpect.flowNodes.helloWorld(
             inchannels=["cheers"]),
-        pdfFromLatex(),
+        ana_surgex_single.pdfFromLatex(),
     ]
 
     if replacement_nodes is None:
@@ -90,7 +86,6 @@ def create_pipeline(**kwargs):
 
     kws = {"default_main_kws": default_main_kws, "node_initializer": enlist_process_nodes}
     kws.update(kwargs)
-    print(kwargs)
     return ana_surgex_single.create_pipeline(**kws)
 
 create_pipeline.__doc__ = ana_surgex_single.create_pipeline.__doc__
