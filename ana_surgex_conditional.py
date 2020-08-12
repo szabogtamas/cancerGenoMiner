@@ -64,16 +64,23 @@ def enlist_process_nodes(
     """
 
     default_nodes = [
-        ana_surgex_single.create_pipeline.fetchClinicalFile(
+        ana_surgex_single.fetchClinicalFile(
             inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
         ),
-        ana_surgex_single.create_pipeline.getSurvival(
+        ana_surgex_single.getSurvival(
             inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
             outchannels=["survivals", "gene_nd"],
             conda=conda,
         ),
         plotSurvival(
-            inchannels=["survivals", "conditiontab", "plotgenes", "symdict", "numplot", "mpl_backend",],
+            inchannels=[
+                "survivals",
+                "conditiontab",
+                "plotgenes",
+                "symdict",
+                "numplot",
+                "mpl_backend",
+            ],
             outchannels=[
                 "plotnames",
                 "gexnames",
@@ -86,7 +93,7 @@ def enlist_process_nodes(
             conda=conda,
             capture=True,
         ),
-        #ana_surgex_single.pdfFromLatex(),
+        # ana_surgex_single.pdfFromLatex(),
     ]
 
     return introSpect.flowNodes.checkNodeReplacements(
@@ -111,6 +118,7 @@ def create_pipeline(**kwargs):
 create_pipeline.__doc__ = ana_surgex_single.create_pipeline.__doc__
 recipe = create_pipeline
 
+
 class plotSurvival(nextflowProcess):
     """
     Nextflow process to execute the function below.
@@ -128,7 +136,10 @@ class plotSurvival(nextflowProcess):
         }
 
     def directives(self):
-        return {"publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"'}
+        return {
+            "echo": "true",
+            "publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
+        }
 
     def channel_specifications(self):
         return {
@@ -264,7 +275,7 @@ class plotSurvival(nextflowProcess):
         ### Read the prefetched data table
         with open(conditiontab, "r",) as f:
             mutants = f.read.split("\n")
-        print(,utants[-5:])
+        print(mutants[-5:])
 
         ### Read the prefetched data table
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
