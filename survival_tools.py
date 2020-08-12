@@ -210,28 +210,28 @@ def plotKMquad(
         timeline=timeline,
         label=l1 + "(n=" + str(len(E[mask1 & alternative_mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[0])
     kmf.fit(
         T[alternative_mask1 & alternative_mask2],
         E[alternative_mask1 & alternative_mask2],
         timeline=timeline,
         label=l2 + "(n=" + str(len(E[alternative_mask1 & alternative_mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[1])
     kmf.fit(
         T[mask1 & mask2],
         E[mask1 & mask2],
         timeline=timeline,
         label=l3 + "(n=" + str(len(E[mask1 & mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[2])
     kmf.fit(
         T[alternative_mask1 & mask2],
         E[alternative_mask1 & mask2],
         timeline=timeline,
         label=l4 + "(n=" + str(len(E[alternative_mask1 & mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[3])
     ax.set_title(title, y=0.5)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
