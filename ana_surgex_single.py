@@ -50,7 +50,12 @@ default_main_kws = {
 }
 
 
-def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None, dict], container_paths: Union[None, dict], conda: Union[None, str]) -> list:
+def enlist_process_nodes(
+    nodes: Union[None, list],
+    replacement_nodes: Union[None, dict],
+    container_paths: Union[None, dict],
+    conda: Union[None, str],
+) -> list:
     """
     Helper function returning a list of initialized process objects. Node list, container
     and conda locations gets passed to this function by the pipeline creator function.
@@ -83,13 +88,7 @@ def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None
             conda=conda,
         ),
         plotSurvival(
-            inchannels=[
-                "survivals",
-                "plotgenes",
-                "symdict",
-                "numplot",
-                "mpl_backend",
-            ],
+            inchannels=["survivals", "plotgenes", "symdict", "numplot", "mpl_backend",],
             outchannels=[
                 "plotnames",
                 "gexnames",
@@ -131,20 +130,9 @@ def enlist_process_nodes(nodes: Union[None, list], replacement_nodes: Union[None
         pdfFromLatex(),
     ]
 
-    if replacement_nodes is None:
-        replacement_nodes = dict()
-    if nodes is None:
-        final_nodes = []
-        for node in default_nodes:
-            object_name = node.__class__.__name__
-            if object_name in replacement_nodes:
-                final_nodes.append(replacement_nodes[object_name])
-            else:
-                final_nodes.append(node)
-        return final_nodes
-    else:
-        return nodes
-    
+    return introSpect.flowNodes.checkNodeReplacements(
+        nodes, default_nodes, replacement_nodes
+    )
 
 
 def create_pipeline(
