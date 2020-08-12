@@ -274,7 +274,7 @@ class plotSurvival(nextflowProcess):
 
         ### Read the prefetched data table
         with open(conditiontab, "r",) as f:
-            mutants = f.read.split("\n")
+            mutants = f.read().split("\n")
         print(mutants[-5:])
 
         ### Read the prefetched data table
