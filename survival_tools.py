@@ -134,6 +134,7 @@ def plotKMpair(
     alternative_mask: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
     labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
+    colors: tuple = (None, None),
     xlabel: str = "Overall survival (months)",
     title: str = "",
     calculate_stat: bool = True,
@@ -157,6 +158,8 @@ def plotKMpair(
         The range of survival that has to be shown.
     labels
         Legend label for the low and the high expression.
+    colors
+        Line colors if not using default color wheel.
     xlabel
         Label for the x axis.
     title
@@ -185,14 +188,14 @@ def plotKMpair(
     kmf.fit(
         T[mask], E[mask], timeline=timeline, label=l1 + "(n=" + str(len(E[mask])) + ")"
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[0])
     kmf.fit(
         T[alternative_mask],
         E[alternative_mask],
         timeline=timeline,
         label=l2 + "(n=" + str(len(E[alternative_mask])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend)
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[1])
     if calculate_stat:
         s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
         title += "\n(p={:1.6f})".format(s.p_value)
@@ -283,7 +286,8 @@ def plotKMquads(
         alternative_mask1 = ~mask1
     if alternative_mask2 is None:
         alternative_mask2 = ~mask2
-    l1, l2, l3, l4 = labels
+    l1, l2, l3, l4 = labels[:4]
+    c1, c2, c3, c4 = colors[:4]
 
     axs[0] = plotKMpair(
         df,
@@ -303,6 +307,7 @@ def plotKMquads(
         alternative_mask=alternative_mask1 & alternative_mask2,
         timeline=timeline,
         labels=[l1, l2],
+        colors=[c1, c2],
         xlabel=xlabel,
         title=title,
         calculate_stat=calculate_stat,
@@ -315,6 +320,7 @@ def plotKMquads(
         alternative_mask=alternative_mask1 & mask2,
         timeline=timeline,
         labels=[l3, l4],
+        colors=[c3, c4],
         xlabel=xlabel,
         title=title,
         calculate_stat=calculate_stat,
@@ -327,6 +333,7 @@ def plotKMquads(
         alternative_mask=alternative_mask1 & alternative_mask2,
         timeline=timeline,
         labels=[l1, l3],
+        colors=[c1, c3],
         xlabel=xlabel,
         title=title,
         calculate_stat=calculate_stat,
@@ -339,6 +346,7 @@ def plotKMquads(
         alternative_mask=alternative_mask1 & mask2,
         timeline=timeline,
         labels=[l2, l4],
+        colors=[c2, c4],
         xlabel=xlabel,
         title=title,
         calculate_stat=calculate_stat,
