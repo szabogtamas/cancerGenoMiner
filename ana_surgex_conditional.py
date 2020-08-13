@@ -275,10 +275,10 @@ class plotSurvival(nextflowProcess):
         ### Read the prefetched data table
         with open(conditiontab, "r",) as f:
             mutants = f.read().split("\n")
-        print(mutants[-5:])
 
         ### Read the prefetched data table
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
+        cmask = clinicals["sample"].isin(mutants)
         smallclinicals = clinicals.head()
 
         ### Plot survival for every gene
@@ -300,8 +300,8 @@ class plotSurvival(nextflowProcess):
             else:
                 symbol = " (" + symbol + ")"
             try:
-                survival_tools.plotKMpair(
-                    cg, mask, title=gene + symbol, ax=ax, make_legend=False
+                survival_tools.plotKMquad(
+                    cg, mask, cmask, title=gene + symbol, ax=ax, make_legend=False
                 )
                 stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
                 stats.append(-1 * np.log10(stat.p_value))
@@ -311,6 +311,29 @@ class plotSurvival(nextflowProcess):
                 ax.set_ylim(0, 1)
                 stats.append(0.0)
         ax = plotting_tools.legend_only(ax=axs[-1])
+
+        
+        ### Plot survival by factors
+        fig, axs = plt.subplots(plotrow*plotcol, 5)
+        axs = axs.flatten()
+        naxs = []
+
+        for i in range(len(symbols)):
+            gene = genes[i]
+            gene = gene.replace('"', "")
+            symbol = symbols[i]
+            ax = axs[5*i:i+5]
+            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.split_by_gex_median(cg, symbol)
+            mask = cg["cat_" + symbol] == "low"
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
+            ax = survival_tools.plotKMquads(
+                cg, mask, cmask, title=gene + symbol, axs=ax
+            )
+            nax.extend(ax)
 
         ### Create prognosis categories based on survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
