@@ -211,7 +211,7 @@ def plotKMpair(
     return ax
 
 
-def plotKMquad(
+def plotKMquads(
     df: pd.DataFrame,
     mask1: pd.Series,
     mask2: pd.Series,
@@ -278,7 +278,7 @@ def plotKMquad(
     """
 
     if ax is None:
-        fig, ax = plt.subplots()
+        fig, axs = plt.subplots(1, 5)
     if alternative_mask1 is None:
         alternative_mask1 = ~mask1
     if alternative_mask2 is None:
@@ -348,7 +348,7 @@ def plotKMquad(
     return axs
 
 
-def plotKMquads(
+def plotKMquad(
     df: pd.DataFrame,
     mask1: pd.Series,
     mask2: pd.Series,
