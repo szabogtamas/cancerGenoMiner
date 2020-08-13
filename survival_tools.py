@@ -324,7 +324,7 @@ def plotKMquads(
     axs[3] = plotKMpair(
         df,
         mask1 & alternative_mask2,
-        alternative_mask=mask1 & alternative_mask2,
+        alternative_mask=alternative_mask1 & alternative_mask2,
         timeline=timeline,
         labels=[l1, l3],
         xlabel=xlabel,
@@ -415,7 +415,7 @@ def plotKMquad(
     """
 
     if axs is None:
-        fig, ax = plt.subplots(1, 5)
+        fig, ax = plt.subplots()
     if alternative_mask1 is None:
         alternative_mask1 = ~mask1
     if alternative_mask2 is None:
