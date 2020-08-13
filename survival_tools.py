@@ -126,6 +126,7 @@ def recipe(
 
     return ax
 
+
 def plotKMpair(
     df: pd.DataFrame,
     mask: pd.Series,
@@ -209,6 +210,7 @@ def plotKMpair(
             pass
     return ax
 
+
 def plotKMquad(
     df: pd.DataFrame,
     mask1: pd.Series,
@@ -282,13 +284,69 @@ def plotKMquad(
     if alternative_mask2 is None:
         alternative_mask2 = ~mask2
     l1, l2, l3, l4 = labels
-    
-    axs[0] = plotKMpair(df, mask1, alternative_mask= alternative_mask1, timeline=timeline, labels=["", ""], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[0])
-    axs[1] = plotKMpair(df, mask1 & alternative_mask2, alternative_mask= alternative_mask1 & alternative_mask2, timeline=timeline, labels=[l1, l2], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[1])
-    axs[2] = plotKMpair(df, mask1 & mask2, alternative_mask= alternative_mask1 & mask2, timeline=timeline, labels=[l3, l4], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[2])
-    axs[3] = plotKMpair(df, mask1 & alternative_mask2, alternative_mask= mask1 & alternative_mask2, timeline=timeline, labels=[l1, l3], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[3])
-    axs[4] = plotKMpair(df, alternative_mask1 & alternative_mask2, alternative_mask= alternative_mask1 & mask2, timeline=timeline, labels=[l2, l4], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[4])
+
+    axs[0] = plotKMpair(
+        df,
+        mask1,
+        alternative_mask=alternative_mask1,
+        timeline=timeline,
+        labels=["", ""],
+        xlabel=xlabel,
+        title=title,
+        calculate_stat=calculate_stat,
+        make_legend=make_legend,
+        ax=axs[0],
+    )
+    axs[1] = plotKMpair(
+        df,
+        mask1 & alternative_mask2,
+        alternative_mask=alternative_mask1 & alternative_mask2,
+        timeline=timeline,
+        labels=[l1, l2],
+        xlabel=xlabel,
+        title=title,
+        calculate_stat=calculate_stat,
+        make_legend=make_legend,
+        ax=axs[1],
+    )
+    axs[2] = plotKMpair(
+        df,
+        mask1 & mask2,
+        alternative_mask=alternative_mask1 & mask2,
+        timeline=timeline,
+        labels=[l3, l4],
+        xlabel=xlabel,
+        title=title,
+        calculate_stat=calculate_stat,
+        make_legend=make_legend,
+        ax=axs[2],
+    )
+    axs[3] = plotKMpair(
+        df,
+        mask1 & alternative_mask2,
+        alternative_mask=mask1 & alternative_mask2,
+        timeline=timeline,
+        labels=[l1, l3],
+        xlabel=xlabel,
+        title=title,
+        calculate_stat=calculate_stat,
+        make_legend=make_legend,
+        ax=axs[3],
+    )
+    axs[4] = plotKMpair(
+        df,
+        alternative_mask1 & alternative_mask2,
+        alternative_mask=alternative_mask1 & mask2,
+        timeline=timeline,
+        labels=[l2, l4],
+        xlabel=xlabel,
+        title=title,
+        calculate_stat=calculate_stat,
+        make_legend=make_legend,
+        ax=axs[4],
+    )
     return axs
+
 
 def plotKMquads(
     df: pd.DataFrame,
