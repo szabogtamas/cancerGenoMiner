@@ -126,6 +126,88 @@ def recipe(
 
     return ax
 
+def plotKMpair(
+    df: pd.DataFrame,
+    mask: pd.Series,
+    *,
+    alternative_mask: Union[None, pd.Series] = None,
+    timeline: Union[None, Sequence] = None,
+    labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
+    xlabel: str = "Overall survival (months)",
+    title: str = "",
+    calculate_stat: bool = True,
+    make_legend: bool = True,
+    ax: Union[None, plt.Axes] = None,
+) -> plt.Axes:
+
+    """
+    Plots two Kaplan-Meier curves to compare survival in two groups.
+
+    Parameters
+    ----------
+    df
+        A data frame with two compulsory columns: time and event.
+    mask
+        A Pandas mask for the main group.
+    alternative_mask
+        The second group is the negation of the first mask
+        by default. This parameter sets a custom mask.
+    timeline
+        The range of survival that has to be shown.
+    labels
+        Legend label for the low and the high expression.
+    xlabel
+        Label for the x axis.
+    title
+        Title of the (sub)plot.
+    calculate_stat
+        If a logrank statistic should be calculated.
+    legend
+        If a legend should be added to the plot.
+    ax
+        The matplotlib axis object for the plot.
+
+    Returns
+    -------
+    The matplotlib axis object with the Kaplan-Meier curves.
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    if alternative_mask is None:
+        alternative_mask = ~mask
+    l1, l2 = labels
+
+    T = df["time"]
+    E = df["event"]
+    kmf = KaplanMeierFitter()
+    kmf.fit(
+        T[mask], E[mask], timeline=timeline, label=l1 + "(n=" + str(len(E[mask])) + ")"
+    )
+    ax = kmf.plot(ax=ax, legend=make_legend)
+    kmf.fit(
+        T[alternative_mask],
+        E[alternative_mask],
+        timeline=timeline,
+        label=l2 + "(n=" + str(len(E[alternative_mask])) + ")",
+    )
+    ax = kmf.plot(ax=ax, legend=make_legend)
+    if calculate_stat:
+        s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
+        title += "\n(p={:1.6f})".format(s.p_value)
+    ax.set_title(title, y=0.5)
+    ax.set_xlabel(xlabel)
+    ax.set_ylim(0, 1.1)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    if make_legend:
+        ax.legend(title="", loc="lower left", frameon=False)
+    else:
+        try:
+            ax.get_legend().remove()
+        except:
+            pass
+    return ax
 
 def plotKMquad(
     df: pd.DataFrame,
@@ -200,6 +282,87 @@ def plotKMquad(
     if alternative_mask2 is None:
         alternative_mask2 = ~mask2
     l1, l2, l3, l4 = labels
+    
+    axs[0] = plotKMpair(df, mask1, alternative_mask= alternative_mask1, timeline=timeline, labels=["", ""], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[0])
+    axs[1] = plotKMpair(df, mask1 & alternative_mask2, alternative_mask= alternative_mask1 & alternative_mask2, timeline=timeline, labels=[l1, l2], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[1])
+    axs[2] = plotKMpair(df, mask1 & mask2, alternative_mask= alternative_mask1 & mask2, timeline=timeline, labels=[l3, l4], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[2])
+    axs[3] = plotKMpair(df, mask1 & alternative_mask2, alternative_mask= mask1 & alternative_mask2, timeline=timeline, labels=[l1, l3], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[3])
+    axs[4] = plotKMpair(df, alternative_mask1 & alternative_mask2, alternative_mask= alternative_mask1 & mask2, timeline=timeline, labels=[l2, l4], xlabel=xlabel, title=title, calculate_stat=calculate_stat, make_legend=make_legend, ax=axs[4])
+    return axs
+
+def plotKMquads(
+    df: pd.DataFrame,
+    mask1: pd.Series,
+    mask2: pd.Series,
+    *,
+    alternative_mask1: Union[None, pd.Series] = None,
+    alternative_mask2: Union[None, pd.Series] = None,
+    timeline: Union[None, Sequence] = None,
+    labels: Union[None, Tuple[str, str, str, str]] = (
+        "WT low",
+        "WT high",
+        "mut low",
+        "mut high",
+    ),
+    colors: Union[None, Tuple[str, str, str, str]] = (
+        "#2ca02c",
+        "#ff7f0e",
+        "#1f77b4",
+        "#d62728",
+    ),
+    xlabel: str = "Overall survival (months)",
+    title: str = "",
+    calculate_stat: bool = True,
+    make_legend: bool = True,
+    axs: Union[None, plt.Axes] = None,
+) -> plt.Axes:
+
+    """
+    Plots Kaplan-Meier curve pairs in a row to compare survival influenced by two factors.
+
+    Parameters
+    ----------
+    df
+        A data frame with two compulsory columns: time and event.
+    mask1
+        A Pandas mask for the main group.
+    mask2
+        A Pandas mask for the secondary grouping.
+    alternative_mask1
+        The alternative group is the negation of the first mask
+        by default. This parameter sets a custom mask.
+    alternative_mask2
+        The secondary alternative group is the negation of the secondary mask
+        by default. This parameter sets a custom mask.
+    timeline
+        The range of survival that has to be shown.
+    labels
+        Legend label for the low and the high expression.
+    colors
+        Line colors to be used.
+    xlabel
+        Label for the x axis.
+    title
+        Title of the (sub)plot.
+    calculate_stat
+        If a logrank statistic should be calculated.
+    legend
+        If a legend should be added to the plot.
+    axs
+        The matplotlib axis objects (5) for the plot.
+
+    Returns
+    -------
+    The matplotlib axis object with the Kaplan-Meier curves.
+    """
+
+    if axs is None:
+        fig, ax = plt.subplots(1, 5)
+    if alternative_mask1 is None:
+        alternative_mask1 = ~mask1
+    if alternative_mask2 is None:
+        alternative_mask2 = ~mask2
+    l1, l2, l3, l4 = labels
 
     T = df["time"]
     E = df["event"]
@@ -232,90 +395,6 @@ def plotKMquad(
         label=l4 + "(n=" + str(len(E[alternative_mask1 & mask2])) + ")",
     )
     ax = kmf.plot(ax=ax, legend=make_legend, color=colors[3])
-    ax.set_title(title, y=0.5)
-    ax.set_xlabel(xlabel)
-    ax.set_ylim(0, 1.1)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    if make_legend:
-        ax.legend(title="", loc="lower left", frameon=False)
-    else:
-        try:
-            ax.get_legend().remove()
-        except:
-            pass
-    return ax
-
-
-def plotKMpair(
-    df: pd.DataFrame,
-    mask: pd.Series,
-    *,
-    alternative_mask: Union[None, pd.Series] = None,
-    timeline: Union[None, Sequence] = None,
-    labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
-    xlabel: str = "Overall survival (months)",
-    title: str = "",
-    calculate_stat: bool = True,
-    make_legend: bool = True,
-    ax: Union[None, plt.Axes] = None,
-) -> plt.Axes:
-
-    """
-    Plots two Kaplan-Meier curves to compare survival in two groups.
-
-    Parameters
-    ----------
-    df
-        A data frame with two compulsory columns: time and event.
-    mask
-        A Pandas mask for the main group.
-    alternative_mask
-        The second group is the negation of the first mask
-        by default. This parameter sets a custom mask.
-    timeline
-        The range of survival that has to be shown.
-    labels
-        Legend label for the low and the high expression.
-    xlabel
-        Label for the x axis.
-    title
-        Title of the (sub)plot.
-    calculate_stat
-        If a logrank statistic should be calculated.
-    legend
-        If a legend should be added to the plot.
-    ax
-        The matplotlib axis object for the plot.
-
-    Returns
-    -------
-    The matplotlib axis object with the Kaplan-Meier curves.
-    """
-
-    if ax is None:
-        fig, ax = plt.subplots()
-    if alternative_mask is None:
-        alternative_mask = ~mask
-    l1, l2 = labels
-
-    T = df["time"]
-    E = df["event"]
-    kmf = KaplanMeierFitter()
-    kmf.fit(
-        T[mask], E[mask], timeline=timeline, label=l1 + "(n=" + str(len(E[mask])) + ")"
-    )
-    ax = kmf.plot(ax=ax, legend=make_legend)
-    kmf.fit(
-        T[alternative_mask],
-        E[alternative_mask],
-        timeline=timeline,
-        label=l2 + "(n=" + str(len(E[alternative_mask])) + ")",
-    )
-    ax = kmf.plot(ax=ax, legend=make_legend)
-    if calculate_stat:
-        s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
-        title += "\n(p={:1.6f})".format(s.p_value)
     ax.set_title(title, y=0.5)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
