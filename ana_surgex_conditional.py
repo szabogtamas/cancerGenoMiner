@@ -312,14 +312,6 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
-            
-            statc = []
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & ~cmask)).p_value)
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & ~cmask)).p_value)
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & cmask)).p_value)
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & cmask)).p_value)
-            stat = np.min(statc)
-            stats.append(-1 * np.log10(stat.p_value))
             try:
                 survival_tools.plotKMquad(
                     cg,
@@ -330,6 +322,29 @@ class plotSurvival(nextflowProcess):
                     make_legend=False,
                     colors=colors,
                 )
+                statc = []
+                statc.append(
+                    survival_tools.logRankSurvival(
+                        cg["time"], cg["event"], (mask & ~cmask)
+                    ).p_value
+                )
+                statc.append(
+                    survival_tools.logRankSurvival(
+                        cg["time"], cg["event"], (~mask & ~cmask)
+                    ).p_value
+                )
+                statc.append(
+                    survival_tools.logRankSurvival(
+                        cg["time"], cg["event"], (mask & cmask)
+                    ).p_value
+                )
+                statc.append(
+                    survival_tools.logRankSurvival(
+                        cg["time"], cg["event"], (~mask & cmask)
+                    ).p_value
+                )
+                stat = np.min(statc)
+                stats.append(-1 * np.log10(stat))
             except:
                 ax.text(0.2, 0.5, "Not enough data")
                 ax.set_xlim(0, 1)
