@@ -346,7 +346,7 @@ class plotSurvival(nextflowProcess):
             has_legendrow = False
             for i in range(plotrow - 1):
                 sax = axs[5 * i : 5 * i + 5]
-                pN = fi * plotrow + i
+                pN = fi * (plotrow - 1) + i
                 if pN < len(genes):
                     gene = genes[pN]
                     gene = gene.replace('"', "")
@@ -372,7 +372,10 @@ class plotSurvival(nextflowProcess):
                 naxs.extend(sax)
             i += 1
             sax = axs[5 * i : 5 * i + 5]
-            if not has_legendrow:
+            if has_legendrow:
+                for nonax in sax:
+                    nonax.axis("off")
+            else:
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
