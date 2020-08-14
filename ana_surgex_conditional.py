@@ -17,7 +17,7 @@ nextflowProcess = introSpect.flowNodes.nextflowProcess
 
 import scipy
 import numpy as np
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple, Sequence, Callable
 from cancerGenoMiner import (
     environment_definiton,
     par_examples,
@@ -41,6 +41,7 @@ default_main_kws = {
     "genedict": {"NaN": "NaN"},  # par_examples.prognosis_genecodes,
     "survtab": "None",
     "conditiontab": "None",
+    "mutlabel": "p53",
     "report_title": '"Title of report"',
     "author_name": '"Author"',
     "lab_name": '"Laboratory or PI"',
@@ -219,9 +220,8 @@ class plotSurvival(nextflowProcess):
         cohort: str = par_examples.cohort,
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
-        labels: Union[
-            None, Tuple[str, str, str, str, str, str]
-        ] = par_examples.quadKMlabels,
+        mutlabel: Union[None, str] = None,
+        labels: Union[None, Sequence] = par_examples.quadKMlabels,
         colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
@@ -282,6 +282,11 @@ class plotSurvival(nextflowProcess):
         ### Read the prefetched data table
         with open(conditiontab, "r",) as f:
             mutants = f.read().split("\n")
+        if mutlabel is not None:
+            labels[2] = mutlabel + " " + labels[4]
+            labels[3] = mutlabel + " " + labels[5]
+        else:
+            mutlabel = None
 
         ### Read the prefetched data table
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
@@ -379,45 +384,38 @@ class plotSurvival(nextflowProcess):
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
-        ### Create prognosis categories based on survival quartiles
-        lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
+        ### Group gene expression by mutation status
         df = ["gex_" + symbol for symbol in symbols]
-        df = clinicals.loc[:, ["time"] + df]
-        df.columns = ["time"] + symbols
-        df = df.melt(id_vars=["time"])
-        df.columns = ["time", "gene", "gex"]
-        df["prognosis"] = df["time"].apply(lambda x: "poor" if x <= lowquart else "")
-        df["prognosis"] = df["prognosis"].astype(str) + df["time"].apply(
-            lambda x: "good" if x >= highquart else ""
+        df = clinicals.loc[:, ["sample"] + df]
+        df.columns = ["sample"] + symbols
+        df = df.melt(id_vars=["sample"])
+        df.columns = ["sample", "gene", "gex"]
+        df["mutation"] = df["sample"].apply(
+            lambda x: mutlabel if x in mutants else "WT"
         )
-        df["prognosis"] = df["prognosis"].apply(lambda x: "mild" if x == "" else x)
 
         ### Plot distribution of gene expression
         fig, gex = plt.subplots(figsize=(7.2, 3.6))
         gex = plotting_tools.sns.violinplot(
             x="gene",
             y="gex",
-            hue="prognosis",
-            hue_order=["poor", "mild", "good"],
+            hue="mutation",
+            hue_order=["WT", mutlabel],
             data=df,
             linewidth=0.2,
             ax=gex,
         )
-        # gex = plotting_tools.sns.boxplot( x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, whis=np.inf, color="white", linewidth=0.4, ax=gex,)
-        # gex = plotting_tools.sns.stripplot(x="gene", y="gex", hue="prognosis", hue_order=["poor", "mild", "good"], dodge=True, data=df, ax=gex, size=1, jitter=0.3,)
-        pg1 = gex.scatter(0, 0, s=1, label="Poor prognosis")
-        pg2 = gex.scatter(0, 0, s=1, label="Mild prognosis")
-        pg3 = gex.scatter(0, 0, s=1, label="Good prognosis")
+        pg1 = gex.scatter(0, 0, s=1, label="WT")
+        pg2 = gex.scatter(0, 0, s=1, label=mutlabel)
         gex.scatter(0, 0, color="white", s=1)
-        gex.legend(handles=[pg1, pg2, pg3], loc="lower right")
+        gex.legend(handles=[pg1, pg2], loc="lower right")
         gex.set_xticklabels(
             [item.get_text() for item in gex.get_xticklabels()], rotation=30, ha="right"
         )
         gex.set_xlabel("")
         gex.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
         gex.set_title(
-            "Gene expression subset by survival quartiles\n(mild prognosis is 2nd and 3rd quartile)",
-            fontsize=9,
+            "Gene expression subset by mutation status\n(" + mutlabel + ")", fontsize=9,
         )
 
         bottom, top = gex.get_ylim()

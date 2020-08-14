@@ -39,14 +39,14 @@ ptable = {
 curated_survivals = "clinical_endpoints.tsv"
 pancan_sampletypes = "PANCAN_xena_sample_types.tsv"
 gdrive_secret = os.path.expanduser("~") + "/.key"
-quadKMlabels = (
+quadKMlabels = [
     "WT low",
     "WT high",
     "mut low",
     "mut high",
     "low",
     "high",
-)
+]
 quadKMcolors = (
     "#2ca02c",
     "#ff7f0e",

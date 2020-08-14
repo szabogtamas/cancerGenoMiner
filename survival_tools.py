@@ -222,9 +222,7 @@ def plotKMquads(
     alternative_mask1: Union[None, pd.Series] = None,
     alternative_mask2: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
-    labels: Union[
-        None, Tuple[str, str, str, str, str, str]
-    ] = par_examples.quadKMlabels,
+    labels: Union[None, Sequence] = par_examples.quadKMlabels,
     colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
@@ -356,9 +354,7 @@ def plotKMquad(
     alternative_mask1: Union[None, pd.Series] = None,
     alternative_mask2: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
-    labels: Union[
-        None, Tuple[str, str, str, str, str, str]
-    ] = par_examples.quadKMlabels,
+    labels: Union[None, Sequence] = par_examples.quadKMlabels,
     colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
