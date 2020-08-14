@@ -155,6 +155,7 @@ def split_by_gex_median(
 
     colname += gene
     catname += gene
+    pd.options.mode.chained_assignment = None
     gex = gex.loc[~pd.isnull(gex[colname]), :]
     gex[colname] = gex[colname].astype(float)
     gexmed = gex[colname].median()
