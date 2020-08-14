@@ -20,7 +20,7 @@ if request_for_special_plotting_backend is not None:
     matplotlib.use(request_for_special_plotting_backend)
 from matplotlib import pyplot as plt
 import seaborn as sns
-from typing import Union, Tuple
+from typing import Union, Tuple, Sequence
 
 
 def recipe(
@@ -70,6 +70,7 @@ def recipe(
 def legend_only(
     *,
     labels: Union[None, Tuple[str, str]] = ("low expression", "high expression"),
+    colors: Union[None, Sequence] = None,
     ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
 
@@ -91,8 +92,11 @@ def legend_only(
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.plot(range(-4, -1), range(-4, -1), label=labels[0])
-    ax.plot(range(-4, -1), range(-4, -1), label=labels[1])
+    for i, l in enumerate(labels):
+        if colors is None:
+            ax.plot(range(-4, -1), range(-4, -1), label=l)
+        else:
+            ax.plot(range(-4, -1), range(-4, -1), label=l, color=colors[i])
     ax.set_xlim(0, 5)
     ax.set_ylim(0, 5)
     ax.axis("off")

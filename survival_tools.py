@@ -222,18 +222,10 @@ def plotKMquads(
     alternative_mask1: Union[None, pd.Series] = None,
     alternative_mask2: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
-    labels: Union[None, Tuple[str, str, str, str]] = (
-        "WT low",
-        "WT high",
-        "mut low",
-        "mut high",
-    ),
-    colors: Union[None, Tuple[str, str, str, str]] = (
-        "#2ca02c",
-        "#ff7f0e",
-        "#1f77b4",
-        "#d62728",
-    ),
+    labels: Union[
+        None, Tuple[str, str, str, str, str, str]
+    ] = par_examples.quadKMlabels,
+    colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
     calculate_stat: bool = True,
@@ -364,22 +356,15 @@ def plotKMquad(
     alternative_mask1: Union[None, pd.Series] = None,
     alternative_mask2: Union[None, pd.Series] = None,
     timeline: Union[None, Sequence] = None,
-    labels: Union[None, Tuple[str, str, str, str]] = (
-        "WT low",
-        "WT high",
-        "mut low",
-        "mut high",
-    ),
-    colors: Union[None, Tuple[str, str, str, str]] = (
-        "#2ca02c",
-        "#ff7f0e",
-        "#1f77b4",
-        "#d62728",
-    ),
+    labels: Union[
+        None, Tuple[str, str, str, str, str, str]
+    ] = par_examples.quadKMlabels,
+    colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
     calculate_stat: bool = True,
     make_legend: bool = True,
+    show_confidence: bool = False,
     ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
 
@@ -414,6 +399,8 @@ def plotKMquad(
         If a logrank statistic should be calculated.
     legend
         If a legend should be added to the plot.
+    show_confidence
+        If confidence range should be shown (makes plot too complicated).
     axs
         The matplotlib axis objects (5) for the plot.
 
@@ -428,7 +415,7 @@ def plotKMquad(
         alternative_mask1 = ~mask1
     if alternative_mask2 is None:
         alternative_mask2 = ~mask2
-    l1, l2, l3, l4 = labels
+    l1, l2, l3, l4 = labels[:4]
 
     T = df["time"]
     E = df["event"]
@@ -439,28 +426,28 @@ def plotKMquad(
         timeline=timeline,
         label=l1 + "(n=" + str(len(E[mask1 & alternative_mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[0])
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[0], ci_show=show_confidence)
     kmf.fit(
         T[alternative_mask1 & alternative_mask2],
         E[alternative_mask1 & alternative_mask2],
         timeline=timeline,
         label=l2 + "(n=" + str(len(E[alternative_mask1 & alternative_mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[1])
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[1], ci_show=show_confidence)
     kmf.fit(
         T[mask1 & mask2],
         E[mask1 & mask2],
         timeline=timeline,
         label=l3 + "(n=" + str(len(E[mask1 & mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[2])
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[2], ci_show=show_confidence)
     kmf.fit(
         T[alternative_mask1 & mask2],
         E[alternative_mask1 & mask2],
         timeline=timeline,
         label=l4 + "(n=" + str(len(E[alternative_mask1 & mask2])) + ")",
     )
-    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[3])
+    ax = kmf.plot(ax=ax, legend=make_legend, color=colors[3], ci_show=show_confidence)
     ax.set_title(title, y=0.5)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)

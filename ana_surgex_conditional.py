@@ -17,7 +17,7 @@ nextflowProcess = introSpect.flowNodes.nextflowProcess
 
 import scipy
 import numpy as np
-from typing import Union, Tuple
+from typing import Union, Tuple, Callable
 from cancerGenoMiner import (
     environment_definiton,
     par_examples,
@@ -219,6 +219,10 @@ class plotSurvival(nextflowProcess):
         cohort: str = par_examples.cohort,
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
+        labels: Union[
+            None, Tuple[str, str, str, str, str, str]
+        ] = par_examples.quadKMlabels,
+        colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
     ) -> Tuple[
@@ -241,6 +245,10 @@ class plotSurvival(nextflowProcess):
             The genes to be queried.
         genedict
             A table mapping gene names to gene symbols.
+        labels
+            Legend label for the low and the high expression.
+        colors
+        Line colors to be used
         plotrow
             Number of subplots in a row.
         plotcol
@@ -301,22 +309,33 @@ class plotSurvival(nextflowProcess):
             else:
                 symbol = " (" + symbol + ")"
             survival_tools.plotKMquad(
-                cg, mask, cmask, title=gene + symbol, ax=ax, make_legend=False
+                cg,
+                mask,
+                cmask,
+                title=gene + symbol,
+                ax=ax,
+                make_legend=False,
+                colors=colors,
             )
             try:
                 survival_tools.plotKMquad(
-                    cg, mask, cmask, title=gene + symbol, ax=ax, make_legend=False
+                    cg,
+                    mask,
+                    cmask,
+                    title=gene + symbol,
+                    ax=ax,
+                    make_legend=False,
+                    colors=colors,
                 )
             except:
                 ax.text(0.2, 0.5, "Not enough data")
                 ax.set_xlim(0, 1)
                 ax.set_ylim(0, 1)
                 stats.append(0.0)
-        ax = plotting_tools.legend_only(ax=axs[-1])
+        ax = plotting_tools.legend_only(ax=axs[-1], labels=labels[:4], colors=colors)
 
-        
         ### Plot survival by factors
-        fig, axs = plt.subplots(plotrow*plotcol, 5)
+        fig, axs = plt.subplots(plotrow * plotcol, 5)
         axs = axs.flatten()
         naxs = []
 
@@ -324,8 +343,8 @@ class plotSurvival(nextflowProcess):
             gene = genes[i]
             gene = gene.replace('"', "")
             symbol = symbols[i]
-            j = 5*i
-            ax = axs[j:j+5]
+            j = 5 * i
+            sax = axs[j : j + 5]
             cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
@@ -333,10 +352,10 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
-            ax = survival_tools.plotKMquads(
-                cg, mask, cmask, title=gene + symbol, axs=ax
+            sax = survival_tools.plotKMquads(
+                cg, mask, cmask, title=gene + symbol, axs=sax
             )
-            naxs.extend(ax)
+            naxs.extend(sax)
 
         ### Create prognosis categories based on survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()
