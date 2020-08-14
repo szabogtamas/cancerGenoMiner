@@ -423,10 +423,10 @@ class plotSurvival(nextflowProcess):
         for i, symbol in enumerate(symbols):
             t, p = scipy.stats.ttest_ind(
                 df.loc[
-                    (df["prognosis"] == "poor") & (df["gene"] == symbol), "gex"
+                    (df["mutation"] == "WT") & (df["gene"] == symbol), "gex"
                 ].tolist(),
                 df.loc[
-                    (df["prognosis"] == "good") & (df["gene"] == symbol), "gex"
+                    (df["mutation"] == mutlabel) & (df["gene"] == symbol), "gex"
                 ].tolist(),
                 equal_var=False,
             )
