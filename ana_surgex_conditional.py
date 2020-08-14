@@ -312,15 +312,14 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
-            survival_tools.plotKMquad(
-                cg,
-                mask,
-                cmask,
-                title=gene + symbol,
-                ax=ax,
-                make_legend=False,
-                colors=colors,
-            )
+            
+            statc = []
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & ~cmask)))
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & ~cmask)))
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & cmask)))
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & cmask)))
+            stat = np.min(statc)
+            stats.append(-1 * np.log10(stat.p_value))
             try:
                 survival_tools.plotKMquad(
                     cg,
