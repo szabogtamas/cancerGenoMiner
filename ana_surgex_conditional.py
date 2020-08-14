@@ -314,10 +314,10 @@ class plotSurvival(nextflowProcess):
                 symbol = " (" + symbol + ")"
             
             statc = []
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & ~cmask)))
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & ~cmask)))
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & cmask)))
-            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & cmask)))
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & ~cmask)).p_value)
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & ~cmask)).p_value)
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (mask & cmask)).p_value)
+            statc.append(survival_tools.logRankSurvival(cg["time"], cg["event"], (~mask & cmask)).p_value)
             stat = np.min(statc)
             stats.append(-1 * np.log10(stat.p_value))
             try:
