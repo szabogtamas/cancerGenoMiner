@@ -337,23 +337,20 @@ class plotSurvival(nextflowProcess):
         ### Plot survival by factors
         fgs = []
         if gN % plotrow == 0:
-            fN = gN/plotrow
+            fN = gN / plotrow
         else:
-            fN = gN/plotrow + 1
+            fN = gN / plotrow + 1
         for fi in range(int(fN)):
-            print(fi, fN)
             fig, axs = plt.subplots(plotrow, 5)
             axs = axs.flatten()
             naxs = []
             for i in range(plotrow):
-                pN = fi*plotrow + i
-                print(pN)
+                sax = axs[5 * i : 5 * i + 5]
+                pN = fi * plotrow + i
                 if pN < len(genes):
                     gene = genes[pN]
                     gene = gene.replace('"', "")
                     symbol = symbols[pN]
-                    j = 5 * i
-                    sax = axs[j : j + 5]
                     cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
                     cg = gex_tools.split_by_gex_median(cg, symbol)
                     mask = cg["cat_" + symbol] == "low"
@@ -365,6 +362,10 @@ class plotSurvival(nextflowProcess):
                         cg, mask, cmask, title=gene + symbol, make_legend=False, axs=sax
                     )
                     naxs.extend(sax)
+                else:
+                    for nonax in sax:
+                        nonax.axis("off")
+                naxs.extend(sax)
             fgs.append(naxs)
 
         ### Create prognosis categories based on survival quartiles

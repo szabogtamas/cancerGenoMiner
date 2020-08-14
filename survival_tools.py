@@ -281,7 +281,6 @@ def plotKMquads(
     l1, l2, l3, l4 = labels[:4]
     c1, c2, c3, c4 = colors[:4]
 
-    print(axs)
     axs[0] = plotKMpair(
         df,
         mask1,
