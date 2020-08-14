@@ -16,7 +16,7 @@ hint = introSpect.hint
 
 import pandas as pd
 import numpy as np
-from lifelines import statistics, KaplanMeierFitter
+from lifelines import statistics, KaplanMeierFitter, NelsonAalenFitter
 from typing import Union, Tuple, List, Sequence
 from . import par_examples, gdc_features, xena_tools, gex_tools, plotting_tools
 

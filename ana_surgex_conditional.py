@@ -296,15 +296,15 @@ class plotSurvival(nextflowProcess):
         ### Plot survival for every gene
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
-        fig, axs = plt.subplots(plotrow, plotcol)
-        axs = axs.flatten()
+        #fig, axs = plt.subplots(plotrow, plotcol)
+        #axs = axs.flatten()
 
         gN = len(symbols)
         for i in range(gN):
             gene = genes[i]
             gene = gene.replace('"', "")
             symbol = symbols[i]
-            ax = axs[i]
+            #ax = axs[i]
             cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
@@ -312,6 +312,14 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
+            T = cg["time"]
+            E = cg["event"]
+            naf = survival_tools.NelsonAalenFitter()
+            naf.fit(T,E)
+            hs = naf.predict(T)
+            fig, ax = plt.subplots()
+            ax.scatter(hs, cg["gex_" + gene])
+            return
             try:
                 survival_tools.plotKMquad(
                     cg,
