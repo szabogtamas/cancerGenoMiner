@@ -291,6 +291,9 @@ class plotSurvival(nextflowProcess):
         ### Read the prefetched data table
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
         cmask = clinicals["sample"].isin(mutants)
+        clinicals["mutation"] = clinicals["sample"].apply(
+            lambda x: mutlabel if x in mutants else "WT"
+        )
         smallclinicals = clinicals.head()
 
         ### Plot survival for every gene
@@ -306,20 +309,14 @@ class plotSurvival(nextflowProcess):
             symbol = symbols[i]
             ax = axs[i]
             cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
-            cg = gex_tools.split_by_gex_median(cg, symbol)
-            mask = cg["cat_" + symbol] == "low"
-            if symbol == gene:
-                symbol = ""
-            else:
-                symbol = " (" + symbol + ")"
             T = cg["time"]
             E = cg["event"]
             naf = survival_tools.NelsonAalenFitter()
-            naf.fit(T,E)
+            naf.fit(T, E)
             hs = naf.predict(T)
-            fig, ax = plt.subplots()
-            ax.scatter(hs, cg["gex_" + gene])
-        ax = plotting_tools.legend_only(ax=axs[-1], labels=labels[:4], colors=colors)
+            mcl = cg["mutation"].apply(lambda x: 0 if x == mutlabel else 1)
+            ax.scatter(hs, cg["gex_" + symbol], s=1, c=mcl, alpha=0.6)
+        ax = plotting_tools.legend_only(ax=axs[-1], labels=["WT", mutlabel])
         return ax
 
         ### Plot survival for every gene
@@ -429,13 +426,10 @@ class plotSurvival(nextflowProcess):
 
         ### Group gene expression by mutation status
         df = ["gex_" + symbol for symbol in symbols]
-        df = clinicals.loc[:, ["sample"] + df]
-        df.columns = ["sample"] + symbols
-        df = df.melt(id_vars=["sample"])
-        df.columns = ["sample", "gene", "gex"]
-        df["mutation"] = df["sample"].apply(
-            lambda x: mutlabel if x in mutants else "WT"
-        )
+        df = clinicals.loc[:, ["sample", "mutation"] + df]
+        df.columns = ["sample", "mutation"] + symbols
+        df = df.melt(id_vars=["sample", "mutation"])
+        df.columns = ["sample", "mutation", "gene", "gex"]
 
         ### Plot distribution of gene expression
         fig, gex = plt.subplots(figsize=(7.2, 3.6))
