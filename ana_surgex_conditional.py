@@ -296,15 +296,15 @@ class plotSurvival(nextflowProcess):
         ### Plot survival for every gene
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
-        #fig, axs = plt.subplots(plotrow, plotcol)
-        #axs = axs.flatten()
+        fig, axs = plt.subplots(plotrow, plotcol)
+        axs = axs.flatten()
 
         gN = len(symbols)
         for i in range(gN):
             gene = genes[i]
             gene = gene.replace('"', "")
             symbol = symbols[i]
-            #ax = axs[i]
+            ax = axs[i]
             cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
@@ -319,7 +319,28 @@ class plotSurvival(nextflowProcess):
             hs = naf.predict(T)
             fig, ax = plt.subplots()
             ax.scatter(hs, cg["gex_" + gene])
-            return
+        ax = plotting_tools.legend_only(ax=axs[-1], labels=labels[:4], colors=colors)
+        return ax
+
+        ### Plot survival for every gene
+        plt = plotting_tools.plt
+        plotting_tools.set_figure_rc()
+        fig, axs = plt.subplots(plotrow, plotcol)
+        axs = axs.flatten()
+
+        gN = len(symbols)
+        for i in range(gN):
+            gene = genes[i]
+            gene = gene.replace('"', "")
+            symbol = symbols[i]
+            ax = axs[i]
+            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+            cg = gex_tools.split_by_gex_median(cg, symbol)
+            mask = cg["cat_" + symbol] == "low"
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
             try:
                 survival_tools.plotKMquad(
                     cg,
