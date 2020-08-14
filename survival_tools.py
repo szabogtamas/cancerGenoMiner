@@ -322,7 +322,7 @@ def plotKMquads(
     axs[3] = plotKMpair(
         df,
         mask1 & alternative_mask2,
-        alternative_mask=alternative_mask1 & alternative_mask2,
+        alternative_mask=alternative_mask1 & mask2,
         timeline=timeline,
         labels=[l1, l3],
         colors=[c1, c3],

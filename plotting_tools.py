@@ -80,7 +80,9 @@ def legend_only(
     Parameters
     ----------
     labels
-        Legend label for the low and the high expression.
+        Legend labels for the low and the high expression.
+    colors
+        Line colors to be used.
     ax
         The matplotlib axis object for the plot.
 
@@ -101,6 +103,43 @@ def legend_only(
     ax.set_ylim(0, 5)
     ax.axis("off")
     ax.legend(title="", loc="upper left", frameon=False)
+    return ax
+
+
+def make_kmquad_legendrow(
+    ax: Union[plt.Axes, str],
+    labels: Tuple[str, str, str, str, str, str],
+    colors: Tuple[str, str, str, str],
+) -> plt.Axes:
+
+    """
+    Makes legend-only figures, typically for the KMquads function.
+
+    Parameters
+    ----------
+    ax
+        A 5-subplot collection of axes.
+    labels
+        Legend labels for the two factors and four conditions.
+    colors
+        Line colors to be used.
+    
+    Returns
+    -------
+    Five subplots with legends only.
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 5)
+
+    l1, l2, l3, l4, l5, l6 = labels[:6]
+    c1, c2, c3, c4 = colors[:4]
+
+    ax[0] = legend_only(ax=ax[0], labels=[l5, l6])
+    ax[1] = legend_only(ax=ax[1], labels=[l1, l2], colors=[c1, c2])
+    ax[2] = legend_only(ax=ax[2], labels=[l3, l4], colors=[c3, c4])
+    ax[3] = legend_only(ax=ax[3], labels=[l1, l3], colors=[c1, c3])
+    ax[4] = legend_only(ax=ax[4], labels=[l2, l4], colors=[c2, c4])
     return ax
 
 

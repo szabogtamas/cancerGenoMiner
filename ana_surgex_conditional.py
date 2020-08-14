@@ -246,9 +246,9 @@ class plotSurvival(nextflowProcess):
         genedict
             A table mapping gene names to gene symbols.
         labels
-            Legend label for the low and the high expression.
+            Legend labels for the two factors and four conditions.
         colors
-        Line colors to be used
+        Line colors to be used.
         plotrow
             Number of subplots in a row.
         plotcol
@@ -257,7 +257,6 @@ class plotSurvival(nextflowProcess):
         Returns
         -------
         Kaplan–Meier plot and distributions of gene expression.
-        
         """
 
         ### Retrieve gene symbols, if available
@@ -336,15 +335,16 @@ class plotSurvival(nextflowProcess):
 
         ### Plot survival by factors
         fgs = []
-        if gN % plotrow == 0:
-            fN = gN / plotrow
+        if gN % (plotrow - 1) == 0:
+            fN = gN / (plotrow - 1)
         else:
-            fN = gN / plotrow + 1
+            fN = gN / (plotrow - 1) + 1
         for fi in range(int(fN)):
             fig, axs = plt.subplots(plotrow, 5)
             axs = axs.flatten()
             naxs = []
-            for i in range(plotrow):
+            has_legendrow = False
+            for i in range(plotrow - 1):
                 sax = axs[5 * i : 5 * i + 5]
                 pN = fi * plotrow + i
                 if pN < len(genes):
@@ -363,9 +363,17 @@ class plotSurvival(nextflowProcess):
                     )
                     naxs.extend(sax)
                 else:
-                    for nonax in sax:
-                        nonax.axis("off")
+                    if has_legendrow:
+                        for nonax in sax:
+                            nonax.axis("off")
+                    else:
+                        sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
+                        has_legendrow = True
                 naxs.extend(sax)
+            i += 1
+            sax = axs[5 * i : 5 * i + 5]
+            if not has_legendrow:
+                sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
         ### Create prognosis categories based on survival quartiles
