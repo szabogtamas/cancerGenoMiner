@@ -287,7 +287,8 @@ class plotSurvival(nextflowProcess):
         fig, axs = plt.subplots(plotrow, plotcol)
         axs = axs.flatten()
 
-        for i in range(len(symbols)):
+        gN = len(symbols)
+        for i in range(gN):
             gene = genes[i]
             gene = gene.replace('"', "")
             symbol = symbols[i]
@@ -299,12 +300,13 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
+            survival_tools.plotKMquad(
+                cg, mask, cmask, title=gene + symbol, ax=ax, make_legend=False
+            )
             try:
                 survival_tools.plotKMquad(
                     cg, mask, cmask, title=gene + symbol, ax=ax, make_legend=False
                 )
-                stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
-                stats.append(-1 * np.log10(stat.p_value))
             except:
                 ax.text(0.2, 0.5, "Not enough data")
                 ax.set_xlim(0, 1)
@@ -318,11 +320,12 @@ class plotSurvival(nextflowProcess):
         axs = axs.flatten()
         naxs = []
 
-        for i in range(len(symbols)):
+        for i in range(gN):
             gene = genes[i]
             gene = gene.replace('"', "")
             symbol = symbols[i]
-            ax = axs[5*i:i+5]
+            j = 5*i
+            ax = axs[j:j+5]
             cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
             cg = gex_tools.split_by_gex_median(cg, symbol)
             mask = cg["cat_" + symbol] == "low"
@@ -333,7 +336,7 @@ class plotSurvival(nextflowProcess):
             ax = survival_tools.plotKMquads(
                 cg, mask, cmask, title=gene + symbol, axs=ax
             )
-            nax.extend(ax)
+            naxs.extend(ax)
 
         ### Create prognosis categories based on survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()

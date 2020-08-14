@@ -380,7 +380,7 @@ def plotKMquad(
     title: str = "",
     calculate_stat: bool = True,
     make_legend: bool = True,
-    axs: Union[None, plt.Axes] = None,
+    ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
 
     """
@@ -422,7 +422,7 @@ def plotKMquad(
     The matplotlib axis object with the Kaplan-Meier curves.
     """
 
-    if axs is None:
+    if ax is None:
         fig, ax = plt.subplots()
     if alternative_mask1 is None:
         alternative_mask1 = ~mask1
