@@ -335,27 +335,37 @@ class plotSurvival(nextflowProcess):
         ax = plotting_tools.legend_only(ax=axs[-1], labels=labels[:4], colors=colors)
 
         ### Plot survival by factors
-        fig, axs = plt.subplots(plotrow * plotcol, 5)
-        axs = axs.flatten()
-        naxs = []
-
-        for i in range(gN):
-            gene = genes[i]
-            gene = gene.replace('"', "")
-            symbol = symbols[i]
-            j = 5 * i
-            sax = axs[j : j + 5]
-            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
-            cg = gex_tools.split_by_gex_median(cg, symbol)
-            mask = cg["cat_" + symbol] == "low"
-            if symbol == gene:
-                symbol = ""
-            else:
-                symbol = " (" + symbol + ")"
-            sax = survival_tools.plotKMquads(
-                cg, mask, cmask, title=gene + symbol, axs=sax
-            )
-            naxs.extend(sax)
+        fgs = []
+        if gN % plotrow == 0:
+            fN = gN/plotrow
+        else:
+            fN = gN/plotrow + 1
+        for fi in range(int(fN)):
+            print(fi, fN)
+            fig, axs = plt.subplots(plotrow, 5)
+            axs = axs.flatten()
+            naxs = []
+            for i in range(plotrow):
+                pN = fi*plotrow + i
+                print(pN)
+                if pN < len(genes):
+                    gene = genes[pN]
+                    gene = gene.replace('"', "")
+                    symbol = symbols[pN]
+                    j = 5 * i
+                    sax = axs[j : j + 5]
+                    cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
+                    cg = gex_tools.split_by_gex_median(cg, symbol)
+                    mask = cg["cat_" + symbol] == "low"
+                    if symbol == gene:
+                        symbol = ""
+                    else:
+                        symbol = " (" + symbol + ")"
+                    sax = survival_tools.plotKMquads(
+                        cg, mask, cmask, title=gene + symbol, make_legend=False, axs=sax
+                    )
+                    naxs.extend(sax)
+            fgs.append(naxs)
 
         ### Create prognosis categories based on survival quartiles
         lowquart, highquart = clinicals.time.quantile([0.25, 0.75]).tolist()

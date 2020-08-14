@@ -281,12 +281,13 @@ def plotKMquads(
     l1, l2, l3, l4 = labels[:4]
     c1, c2, c3, c4 = colors[:4]
 
+    print(axs)
     axs[0] = plotKMpair(
         df,
         mask1,
         alternative_mask=alternative_mask1,
         timeline=timeline,
-        labels=["", ""],
+        labels=labels[4:6],
         xlabel=xlabel,
         title=title,
         calculate_stat=calculate_stat,
