@@ -166,7 +166,7 @@ def plotKMpair(
         Title of the (sub)plot.
     calculate_stat
         If a logrank statistic should be calculated.
-    legend
+    make_legend
         If a legend should be added to the plot.
     ax
         The matplotlib axis object for the plot.
@@ -260,7 +260,7 @@ def plotKMquads(
         Title of the (sub)plot.
     calculate_stat
         If a logrank statistic should be calculated.
-    legend
+    make_legend
         If a legend should be added to the plot.
     ax
         The matplotlib axis object for the plot.
@@ -393,7 +393,7 @@ def plotKMquad(
         Title of the (sub)plot.
     calculate_stat
         If a logrank statistic should be calculated.
-    legend
+    make_legend
         If a legend should be added to the plot.
     show_confidence
         If confidence range should be shown (makes plot too complicated).
@@ -447,6 +447,81 @@ def plotKMquad(
     ax.set_title(title, y=0.5)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    if make_legend:
+        ax.legend(title="", loc="lower left", frameon=False)
+    else:
+        try:
+            ax.get_legend().remove()
+        except:
+            pass
+    return ax
+
+
+def plotSurvHazardCat(
+    df: pd.DataFrame,
+    *,
+    featcol: str = "",
+    catcol: str = "mutation",
+    colordict: dict = par_examples.hazardColors,
+    xlabel: str = "Overall survival (months)",
+    title: str = "",
+    make_legend: bool = True,
+    ax: Union[None, plt.Axes] = None,
+) -> plt.Axes:
+
+    """
+    Plots four Kaplan-Meier curves to compare survival in influenced by two factors.
+
+    Parameters
+    ----------
+    df
+        A data frame with two compulsory columns: time and event.
+    featcol
+        A continous feature column, typically the survived hazard.
+    catcol
+        Categorical column that will determine coloring.
+    colordict
+        Mapping between categories and colors.
+    xlabel
+        Label for the x axis.
+    title
+        Title of the (sub)plot.
+    make_legend
+        If a legend should be added to the plot.
+    ax
+        The matplotlib axis object for the plot.
+
+    Returns
+    -------
+    The matplotlib axis object with the Kaplan-Meier curves.
+    """
+
+    ### Create axis and set missing color value if not defined explicitely
+    if ax is None:
+        fig, ax = plt.subplots()
+    if "NaN" in colordict:
+        greyCode = colordict["NaN"]
+    else:
+        greyCode = "#dddddd"
+
+    ### Fit survival Nelson-Aalen Estimator of Hazard on survival data
+    T = df["time"]
+    E = df["event"]
+    naf = NelsonAalenFitter()
+    naf.fit(T, E)
+
+    ### Plot gene expression and hazard for individual patients
+    ax.scatter(
+        naf.predict(T),
+        df[featcol],
+        s=0.5,
+        c=df[catcol].map(colordict).fillna(greyCode),
+        alpha=0.6,
+    )
+    ax.set_title(title, y=0.5)
+    ax.set_xlabel(xlabel)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if make_legend:

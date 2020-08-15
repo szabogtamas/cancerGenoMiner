@@ -296,7 +296,7 @@ class plotSurvival(nextflowProcess):
         )
         smallclinicals = clinicals.head()
 
-        ### Plot survival for every gene
+        ### Plot gene expression as a function of survived hazard
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
         fig, axs = plt.subplots(plotrow, plotcol)
@@ -308,16 +308,24 @@ class plotSurvival(nextflowProcess):
             gene = gene.replace('"', "")
             symbol = symbols[i]
             ax = axs[i]
-            cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
-            T = cg["time"]
-            E = cg["event"]
-            naf = survival_tools.NelsonAalenFitter()
-            naf.fit(T, E)
-            hs = naf.predict(T)
-            mcl = cg["mutation"].apply(
-                lambda x: colors[5] if x == mutlabel else colors[4]
+            cg = clinicals.loc[
+                clinicals["gex_" + symbol] != "NaN",
+                ["time", "event", "mutation", "gex_" + symbol],
+            ]
+            cg.columns = ["time", "event", "mutation", "gex"]
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
+            ax = survival_tools.plotSurvHazardCat(
+                cg,
+                featcol="gex",
+                catcol="mutation",
+                colordict={"WT": colors[4], mutlabel: colors[5]},
+                title=gene + symbol,
+                make_legend=False,
+                ax=ax,
             )
-            ax.scatter(hs, cg["gex_" + symbol], s=0.5, c=mcl, alpha=0.6)
         ax = plotting_tools.legend_only(
             ax=axs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
