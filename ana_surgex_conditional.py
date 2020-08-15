@@ -175,39 +175,22 @@ class plotSurvival(nextflowProcess):
             "titles": ("file", '"${plotcohort}_title.txt"', "titles", None, False),
             "notebooks": ("file", "note_name", None, None, False),
         }
+ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
 
     def customize_features(self):
         self.modified_kws = {
-            "outFile": (
-                1,
-                "-o",
-                "--outFile",
-                {
-                    "dest": "outFile",
-                    "help": "Location where results should be saved. If not specified, STDOUT will be used.",
-                },
-            ),
-            "lrt": (
-                2,
-                "--lrt",
-                {
-                    "dest": "lrt",
-                    "help": "Temporary file to store results of log-rank test.",
-                },
-            ),
-            "titles": (
-                3,
-                "--titles",
-                {
-                    "dest": "titles",
-                    "help": "Temporary file to store results of page titles.",
-                },
-            ),
-            "gex": (
-                4,
-                "--gex",
-                {"dest": "gex", "help": "Distribution of gene expressions.",},
-            ),
+            p[0]: (i + 1, "--" + p[0], {"dest": p[0], "help": p[1],})
+            for i, p in enumerate(
+                [
+                    ("kmp", "Kaplan-Meier plots of 4 groups, by 2 dichotomous conditions"),
+                    ("kmq", "Kaplan-Meier plot series with every pairs of conditions"),
+                    ("hazardcorr", "Correlation of survived hazard with gene expression"),
+                    ("hazarddist", "Distribution of gene expression in risk groups"),
+                    ("mutdist", "Distribution of gene expression in WT and mutant"),
+                    ("lrt", "Temporary file to store results of log-rank test"),
+                    ("titles", "Temporary file to store results of page titles"),
+                ]
+            )
         }
         self.capturepars = ["note_title", "note_name"]
         return None
