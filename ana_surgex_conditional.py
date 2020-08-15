@@ -222,7 +222,7 @@ class plotSurvival(nextflowProcess):
         genedict: Union[None, str] = None,
         mutlabel: Union[None, str] = None,
         labels: Union[None, Sequence] = par_examples.quadKMlabels,
-        colors: Union[None, Tuple[str, str, str, str]] = par_examples.quadKMcolors,
+        colors: Union[None, Sequence] = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
     ) -> Tuple[
@@ -315,11 +315,11 @@ class plotSurvival(nextflowProcess):
             naf.fit(T, E)
             hs = naf.predict(T)
             mcl = cg["mutation"].apply(
-                lambda x: "#d95f02" if x == mutlabel else "#1b9e77"
+                lambda x: colors[5] if x == mutlabel else colors[4]
             )
             ax.scatter(hs, cg["gex_" + symbol], s=0.5, c=mcl, alpha=0.6)
         ax = plotting_tools.legend_only(
-            ax=axs[-1], labels=["WT", mutlabel], colors=["#1b9e77", "#d95f02"]
+            ax=axs[-1], labels=["WT", mutlabel], colors=[colors[4:6]]
         )
         return ax
 
