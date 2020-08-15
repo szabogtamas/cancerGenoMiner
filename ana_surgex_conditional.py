@@ -297,7 +297,7 @@ class plotSurvival(nextflowProcess):
         clinicals = survival_tools.calcSurvHazardCat(clinicals, hazardcol="hazard")
         smallclinicals = clinicals.head()
 
-        ### Group gene expression by mutation status and hazard
+        ### Reorder table to group gene expression by mutation status and hazard
         df = ["gex_" + symbol for symbol in symbols]
         commoncols = ["sample", "mutation", "hazard"]
         df = clinicals.loc[:, commoncols + df]
@@ -307,40 +307,46 @@ class plotSurvival(nextflowProcess):
 
         plt = plotting_tools.plt
 
-        ### Plot distribution of gene expression
-        fig, gex = plt.subplots(figsize=(7.2, 3.6))
-        gex = plotting_tools.sns.violinplot(
+        ### Label patients according to hazard: low survived hazard is high risk
+        df["risk"] = df["hazard"].apply(lambda x: "high" if x <= 0.25 else "")
+        df["risk"] = df["risk"].astype(str) + df["hazard"].apply(
+            lambda x: "low" if x >= 0.75 else ""
+        )
+        df["risk"] = df["risk"].apply(lambda x: "mild" if x == "" else x)
+
+        ### Plot distribution of gene expression in hazard groups
+        fig, pax = plt.subplots(figsize=(7.2, 3.6))
+        pax = plotting_tools.sns.violinplot(
             x="gene",
             y="gex",
-            hue="mutation",
-            hue_order=["WT", mutlabel],
+            hue="risk",
+            hue_order=["high", "mild", "low"],
             data=df,
             linewidth=0.2,
-            ax=gex,
+            ax=pax,
         )
-        pg1 = gex.scatter(0, 0, s=1, label="WT")
-        pg2 = gex.scatter(0, 0, s=1, label=mutlabel)
-        gex.scatter(0, 0, color="white", s=1)
-        gex.legend(handles=[pg1, pg2], loc="lower right")
-        gex.set_xticklabels(
-            [item.get_text() for item in gex.get_xticklabels()], rotation=30, ha="right"
+        pg1 = pax.scatter(0, 0, s=1, label="High risk")
+        pg2 = pax.scatter(0, 0, s=1, label="Mild prognosis")
+        pg3 = pax.scatter(0, 0, s=1, label="Low risk")
+        pax.scatter(0, 0, color="white", s=1)
+        pax.legend(handles=[pg1, pg2, pg3], loc="lower right")
+        pax.set_xticklabels(
+            [item.get_text() for item in pax.get_xticklabels()], rotation=30, ha="right"
         )
-        gex.set_xlabel("")
-        gex.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
-        gex.set_title(
-            "Gene expression subset by mutation status\n(" + mutlabel + ")", fontsize=9,
+        pax.set_xlabel("")
+        pax.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
+        pax.set_title(
+            "Gene expression subset by risk\n(survived hazard retrospectively)",
+            fontsize=9,
         )
 
-        bottom, top = gex.get_ylim()
+        ### Calculate statistics and add stars if significant
+        bottom, top = pax.get_ylim()
         top = 0.9 * top
         for i, symbol in enumerate(symbols):
             t, p = scipy.stats.ttest_ind(
-                df.loc[
-                    (df["mutation"] == "WT") & (df["gene"] == symbol), "gex"
-                ].tolist(),
-                df.loc[
-                    (df["mutation"] == mutlabel) & (df["gene"] == symbol), "gex"
-                ].tolist(),
+                df.loc[(df["risk"] == "low") & (df["gene"] == symbol), "gex"].tolist(),
+                df.loc[(df["risk"] == "high") & (df["gene"] == symbol), "gex"].tolist(),
                 equal_var=False,
             )
             s = "p={:1.5f}".format(p)
@@ -352,7 +358,7 @@ class plotSurvival(nextflowProcess):
                         s += "*"
             else:
                 s = ""
-            gex.text(i, top, s)
+            pax.text(i, top, s)
 
         return
 
