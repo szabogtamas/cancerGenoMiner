@@ -466,6 +466,7 @@ def plotSurvHazardCat(
     catcol: str = "mutation",
     colordict: dict = par_examples.hazardColors,
     xlabel: str = "Survived hazard",
+    ylabel: str = "FPKM-UQ",
     title: str = "",
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
@@ -486,6 +487,8 @@ def plotSurvHazardCat(
         Mapping between categories and colors.
     xlabel
         Label for the x axis.
+    ylabel
+        Label for the y axis.
     title
         Title of the (sub)plot.
     make_legend
@@ -520,8 +523,10 @@ def plotSurvHazardCat(
         c=df[catcol].map(colordict).fillna(greyCode),
         alpha=0.6,
     )
-    ax.set_title(title, y=0.5)
+    ax.set_title(title, y=0.8)
     ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_ylim(0, 25)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if make_legend:
