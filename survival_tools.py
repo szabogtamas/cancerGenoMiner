@@ -468,6 +468,7 @@ def plotSurvHazardCat(
     xlabel: str = "Survived hazard",
     ylabel: str = "FPKM-UQ",
     title: str = "",
+    loghazard: bool = True,
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
@@ -491,6 +492,8 @@ def plotSurvHazardCat(
         Label for the y axis.
     title
         Title of the (sub)plot.
+    loghazard
+        If a x axis, showing cumulative hazard should be logarithmic.
     make_legend
         If a legend should be added to the plot.
     ax
@@ -529,6 +532,8 @@ def plotSurvHazardCat(
     ax.set_ylim(0, 25)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
+    if loghazard:
+        ax.set_xscale('log')
     if make_legend:
         ax.legend(title="", loc="lower left", frameon=False)
     else:
