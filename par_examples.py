@@ -47,7 +47,7 @@ quadKMlabels = [
     "low",
     "high",
 ]
-quadKMcolors = ("#2ca02c", "#ff7f0e", "#1f77b4", "#d62728", "#1b9e77", "#d95f02")
+quadKMcolors = ["#2ca02c", "#ff7f0e", "#1f77b4", "#d62728", "#1b9e77", "#d95f02"]
 hazardColors = {"WT": "#1b9e77", "mut": "#d95f02"}
 
 

@@ -84,7 +84,10 @@ def enlist_process_nodes(
             ],
             outchannels=[
                 "plotnames",
-                "gexnames",
+                "quadnames",
+                "hcorrnames",
+                "hdistnames",
+                "mdistnames",
                 "images",
                 "plots",
                 "stats",
@@ -162,29 +165,37 @@ class plotSurvival(nextflowProcess):
                 False,
             ),
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
-            "plotnames": ("val", "plotcohort", "outFile", None, False),
-            "gexnames": ("val", "gexcohort", "gex", None, False),
+            "plotnames": ("val", '"${plotcohort}_km"', "kmp", None, False),
+            "quadnames": ("val", '"${plotcohort}_quad"', "kmq", None, False),
+            "hcorrnames": ("val", '"${plotcohort}_hcorr"', "hazardcorr", None, False),
+            "hdistnames": ("val", '"${plotcohort}_hdist"', "hazarddist", None, False),
+            "mdistnames": ("val", '"${plotcohort}_mdist"', "mutdist", None, False),
             "images": ("file", '"*.png"', None, None, False),
             "plots": (
                 "tuple",
-                ('"${plotcohort}.pgf"', '"${gexcohort}.pgf"'),
-                (None, None),
+                ('"${plotcohort}_km.pgf"', '"${plotcohort}_quad.pgf"', '"${plotcohort}_hcorr.pgf"', '"${plotcohort}_hdist.pgf"', '"${plotcohort}_mdist.pgf"'),
+                (None, None, None, None, None),
                 None,
                 False,
             ),
             "titles": ("file", '"${plotcohort}_title.txt"', "titles", None, False),
             "notebooks": ("file", "note_name", None, None, False),
         }
-ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
 
     def customize_features(self):
         self.modified_kws = {
             p[0]: (i + 1, "--" + p[0], {"dest": p[0], "help": p[1],})
             for i, p in enumerate(
                 [
-                    ("kmp", "Kaplan-Meier plots of 4 groups, by 2 dichotomous conditions"),
+                    (
+                        "kmp",
+                        "Kaplan-Meier plots of 4 groups, by 2 dichotomous conditions",
+                    ),
                     ("kmq", "Kaplan-Meier plot series with every pairs of conditions"),
-                    ("hazardcorr", "Correlation of survived hazard with gene expression"),
+                    (
+                        "hazardcorr",
+                        "Correlation of survived hazard with gene expression",
+                    ),
                     ("hazarddist", "Distribution of gene expression in risk groups"),
                     ("mutdist", "Distribution of gene expression in WT and mutant"),
                     ("lrt", "Temporary file to store results of log-rank test"),
@@ -427,7 +438,7 @@ ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
         hax = plotting_tools.legend_only(
             ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
-        
+
         ### Label patients according to hazard: low survived hazard is high risk
         df["risk"] = df["hazard"].apply(lambda x: "high" if x <= 0.25 else "")
         df["risk"] = df["risk"].astype(str) + df["hazard"].apply(
@@ -528,7 +539,7 @@ ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
                 s = ""
             gex.text(i, top, s)
 
-        return ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
+        return ax, fgs[0], hax, pax, gex, [["cohort"] + genes, stats], titles
 
 
 def main():
