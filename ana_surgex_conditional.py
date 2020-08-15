@@ -314,9 +314,13 @@ class plotSurvival(nextflowProcess):
             naf = survival_tools.NelsonAalenFitter()
             naf.fit(T, E)
             hs = naf.predict(T)
-            mcl = cg["mutation"].apply(lambda x: 0 if x == mutlabel else 1)
-            ax.scatter(hs, cg["gex_" + symbol], s=1, c=mcl, alpha=0.6)
-        ax = plotting_tools.legend_only(ax=axs[-1], labels=["WT", mutlabel])
+            mcl = cg["mutation"].apply(
+                lambda x: "#d95f02" if x == mutlabel else "#1b9e77"
+            )
+            ax.scatter(hs, cg["gex_" + symbol], s=0.5, c=mcl, alpha=0.6)
+        ax = plotting_tools.legend_only(
+            ax=axs[-1], labels=["WT", mutlabel], colors=["#1b9e77", "#d95f02"]
+        )
         return ax
 
         ### Plot survival for every gene
