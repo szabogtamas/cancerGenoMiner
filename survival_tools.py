@@ -533,7 +533,7 @@ def plotSurvHazardCat(
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if loghazard:
-        ax.set_xscale('log')
+        ax.set_xscale("log")
     if make_legend:
         ax.legend(title="", loc="lower left", frameon=False)
     else:

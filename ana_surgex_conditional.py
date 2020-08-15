@@ -296,41 +296,6 @@ class plotSurvival(nextflowProcess):
         )
         smallclinicals = clinicals.head()
 
-        ### Plot gene expression as a function of survived hazard
-        plt = plotting_tools.plt
-        plotting_tools.set_figure_rc()
-        fig, axs = plt.subplots(plotrow, plotcol)
-        axs = axs.flatten()
-
-        gN = len(symbols)
-        for i in range(gN):
-            gene = genes[i]
-            gene = gene.replace('"', "")
-            symbol = symbols[i]
-            ax = axs[i]
-            cg = clinicals.loc[
-                clinicals["gex_" + symbol] != "NaN",
-                ["time", "event", "mutation", "gex_" + symbol],
-            ]
-            cg.columns = ["time", "event", "mutation", "gex"]
-            if symbol == gene:
-                symbol = ""
-            else:
-                symbol = " (" + symbol + ")"
-            ax = survival_tools.plotSurvHazardCat(
-                cg,
-                featcol="gex",
-                catcol="mutation",
-                colordict={"WT": colors[4], mutlabel: colors[5]},
-                title=gene + symbol,
-                make_legend=False,
-                ax=ax,
-            )
-        ax = plotting_tools.legend_only(
-            ax=axs[-1], labels=["WT", mutlabel], colors=colors[4:6]
-        )
-        return ax
-
         ### Plot survival for every gene
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
@@ -435,6 +400,42 @@ class plotSurvival(nextflowProcess):
             else:
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
+
+        
+
+        ### Plot gene expression as a function of survived hazard
+        plt = plotting_tools.plt
+        plotting_tools.set_figure_rc()
+        fig, haxs = plt.subplots(plotrow, plotcol)
+        haxs = haxs.flatten()
+
+        gN = len(symbols)
+        for i in range(gN):
+            gene = genes[i]
+            gene = gene.replace('"', "")
+            symbol = symbols[i]
+            hax = haxs[i]
+            cg = clinicals.loc[
+                clinicals["gex_" + symbol] != "NaN",
+                ["time", "event", "mutation", "gex_" + symbol],
+            ]
+            cg.columns = ["time", "event", "mutation", "gex"]
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
+            hax = survival_tools.plotSurvHazardCat(
+                cg,
+                featcol="gex",
+                catcol="mutation",
+                colordict={"WT": colors[4], mutlabel: colors[5]},
+                title=gene + symbol,
+                make_legend=False,
+                ax=hax,
+            )
+        hax = plotting_tools.legend_only(
+            hax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
+        )
 
         ### Group gene expression by mutation status
         df = ["gex_" + symbol for symbol in symbols]
