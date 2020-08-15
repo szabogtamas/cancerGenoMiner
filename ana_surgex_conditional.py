@@ -97,6 +97,17 @@ def enlist_process_nodes(
             conda=conda,
             capture=True,
         ),
+        ana_surgex_single.makeHeatmap(
+            inchannels=["stat", "heatmap_f"],
+            outchannels=["heatmap", "heatimage", "cohort_order"],
+            conda=conda,
+        ),
+        ana_surgex_single.pptFromFigures(conda=conda),
+        ana_surgex_single.getRefs(
+            inchannels=["bibliography", "drive_key"],
+            outchannels=["bibtex"],
+            conda=conda,
+        ),
         # ana_surgex_single.pdfFromLatex(),
     ]
 
@@ -133,7 +144,7 @@ class plotSurvival(nextflowProcess):
             "imports": [
                 "import scipy",
                 "import numpy as np",
-                "from typing import Union, Tuple",
+                "from typing import Union, Tuple, Sequence",
                 "from cancerGenoMiner import par_examples, gdc_features, plotting_tools, survival_tools, xena_tools, gex_tools",
             ],
             "inhouse_packages": [cgm_folder, intro_folder],
@@ -173,7 +184,13 @@ class plotSurvival(nextflowProcess):
             "images": ("file", '"*.png"', None, None, False),
             "plots": (
                 "tuple",
-                ('"${plotcohort}_km.pgf"', '"${plotcohort}_quad.pgf"', '"${plotcohort}_hcorr.pgf"', '"${plotcohort}_hdist.pgf"', '"${plotcohort}_mdist.pgf"'),
+                (
+                    '"${plotcohort}_km.pgf"',
+                    '"${plotcohort}_quad.pgf"',
+                    '"${plotcohort}_hcorr.pgf"',
+                    '"${plotcohort}_hdist.pgf"',
+                    '"${plotcohort}_mdist.pgf"',
+                ),
                 (None, None, None, None, None),
                 None,
                 False,
@@ -215,8 +232,8 @@ class plotSurvival(nextflowProcess):
         genes: list = par_examples.target_genes,
         genedict: Union[None, str] = None,
         mutlabel: Union[None, str] = None,
-        labels: Union[None, Sequence] = par_examples.quadKMlabels,
-        colors: Union[None, Sequence] = par_examples.quadKMcolors,
+        labels: list = par_examples.quadKMlabels,
+        colors: list = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
     ) -> Tuple[
