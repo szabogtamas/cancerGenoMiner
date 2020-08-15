@@ -401,8 +401,6 @@ class plotSurvival(nextflowProcess):
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
-        
-
         ### Plot gene expression as a function of survived hazard
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
@@ -434,7 +432,7 @@ class plotSurvival(nextflowProcess):
                 ax=hax,
             )
         hax = plotting_tools.legend_only(
-            hax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
+            ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
 
         ### Group gene expression by mutation status
