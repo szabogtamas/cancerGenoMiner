@@ -232,7 +232,7 @@ def plotKMquads(
 ) -> plt.Axes:
 
     """
-    Plots four Kaplan-Meier curves to compare survival in influenced by two factors.
+    Plots four Kaplan-Meier curves to compare survival influenced by two factors.
 
     Parameters
     ----------
@@ -459,10 +459,38 @@ def plotKMquad(
     return ax
 
 
+def calcSurvHazardCat(df: pd.DataFrame, *, hazardcol: str = "hazard",) -> pd.DataFrame:
+
+    """
+    Calculate cumulative hazard survived for each individual patient, as an alternative
+    to raw (and often censored) survival time.
+
+    Parameters
+    ----------
+    df
+        A data frame with two compulsory columns: time and event.
+    hazardcol
+        Column name for the survived hazard.
+
+    Returns
+    -------
+    The input dataframe, with an extra column of hazards.
+    """
+
+    ### Fit survival Nelson-Aalen Estimator of Hazard on survival data
+    T = df["time"]
+    E = df["event"]
+    naf = NelsonAalenFitter()
+    naf.fit(T, E)
+    df[hazardcol] = naf.predict(T).tolist()
+    return df
+
+
 def plotSurvHazardCat(
     df: pd.DataFrame,
     *,
-    featcol: str = "",
+    hazardcol: str = "hazard",
+    featcol: str = "gex",
     catcol: str = "mutation",
     colordict: dict = par_examples.hazardColors,
     xlabel: str = "Survived hazard",
@@ -480,8 +508,10 @@ def plotSurvHazardCat(
     ----------
     df
         A data frame with two compulsory columns: time and event.
+    hazardcol
+        Column name for the survived hazard.
     featcol
-        A continous feature column, typically the survived hazard.
+        A continous feature column, typically gene expression.
     catcol
         Categorical column that will determine coloring.
     colordict
@@ -512,15 +542,9 @@ def plotSurvHazardCat(
     else:
         greyCode = "#dddddd"
 
-    ### Fit survival Nelson-Aalen Estimator of Hazard on survival data
-    T = df["time"]
-    E = df["event"]
-    naf = NelsonAalenFitter()
-    naf.fit(T, E)
-
     ### Plot gene expression and hazard for individual patients
     ax.scatter(
-        naf.predict(T),
+        df[hazardcol],
         df[featcol],
         s=0.5,
         c=df[catcol].map(colordict).fillna(greyCode),
