@@ -155,6 +155,23 @@ class plotSurvival(nextflowProcess):
             "echo": "true",
             "publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
         }
+        
+    def channel_pretreat(self):
+        return [
+            [
+                "Channel",
+                "from(params.colors)",
+                "toList()",
+                "map{it.replace(" + '"#", "\\#"' +")}",
+                "set{colors}",
+            ],
+            [
+                "Channel",
+                "from(params.colors)",
+                "toList()",
+                "set{labels}",
+            ],
+        ]
 
     def channel_specifications(self):
         return {
