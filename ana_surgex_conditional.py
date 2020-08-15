@@ -319,7 +319,7 @@ class plotSurvival(nextflowProcess):
             )
             ax.scatter(hs, cg["gex_" + symbol], s=0.5, c=mcl, alpha=0.6)
         ax = plotting_tools.legend_only(
-            ax=axs[-1], labels=["WT", mutlabel], colors=[colors[4:6]]
+            ax=axs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
         return ax
 
