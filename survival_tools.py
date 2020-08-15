@@ -465,7 +465,7 @@ def plotSurvHazardCat(
     featcol: str = "",
     catcol: str = "mutation",
     colordict: dict = par_examples.hazardColors,
-    xlabel: str = "Overall survival (months)",
+    xlabel: str = "Survived hazard",
     title: str = "",
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
