@@ -127,7 +127,7 @@ def enlist_process_nodes(
             outchannels=["reportex"],
             conda=conda,
         ),
-        # ana_surgex_single.pdfFromLatex(),
+        ana_surgex_single.pdfFromLatex(),
     ]
 
     return introSpect.flowNodes.checkNodeReplacements(
