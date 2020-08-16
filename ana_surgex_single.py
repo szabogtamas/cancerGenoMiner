@@ -322,6 +322,7 @@ class getSurvival(nextflowProcess):
         return {
             "imports": [
                 "import connectDrive",
+                "import ssl\nssl._create_default_https_context = ssl._create_unverified_context,"  # Remove this later for production version!!!
                 "from typing import Union, Tuple",
                 "from cancerGenoMiner import par_examples, gdc_features, survival_tools, xena_tools, gex_tools",
             ],
