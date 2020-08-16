@@ -220,6 +220,7 @@ class plotSurvival(nextflowProcess):
                 "toList()",
                 "map{it.join(',')}",
                 "map{it.replaceAll(" + '"#", "\\\\#"' + ")}",
+                "map{'" + '"' + "' + it + '" + '"' + ")}",
                 "set{colors}",
             ],
             [
@@ -227,6 +228,7 @@ class plotSurvival(nextflowProcess):
                 "from(params.labels)",
                 "toList()",
                 "map{it.join(',')}",
+                "map{'" + '"' + "' + it + '" + '"' + ")}",
                 "set{labels}",
             ],
         ]
@@ -346,8 +348,6 @@ class plotSurvival(nextflowProcess):
         -------
         Kaplan–Meier plot and distributions of gene expression.
         """
-
-        print("!!!", clinicals)
 
         ### Retrieve gene symbols, if available
         if genedict is not None:

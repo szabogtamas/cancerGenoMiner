@@ -486,7 +486,6 @@ class getSurvival(nextflowProcess):
             clinicals = gex_tools.add_gene_expression_by_probes(
                 symbols, clinicals, xena_hub, gex_dataset
             )
-        print(clinicals.head())
         return clinicals, gd
 
 
