@@ -220,7 +220,7 @@ class plotSurvival(nextflowProcess):
                 "toList()",
                 "map{it.join(',')}",
                 "map{it.replaceAll(" + '"#", "\\\\#"' + ")}",
-                "map{'" + '"' + "' + it + '" + '"' + "')}",
+                "map{'" + '"' + "' + it + '" + '"' + "'}",
                 "set{colors}",
             ],
             [
@@ -228,7 +228,7 @@ class plotSurvival(nextflowProcess):
                 "from(params.labels)",
                 "toList()",
                 "map{it.join(',')}",
-                "map{'" + '"' + "' + it + '" + '"' + "')}",
+                "map{'" + '"' + "' + it + '" + '"' + "'}",
                 "set{labels}",
             ],
         ]
