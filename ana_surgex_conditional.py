@@ -130,43 +130,6 @@ def enlist_process_nodes(
         # ana_surgex_single.pdfFromLatex(),
     ]
 
-    default_nodes = [
-        ana_surgex_single.fetchClinicalFile(
-            inchannels=["survtab"], outchannels=["local_survtab"], conda=conda
-        ),
-        ana_surgex_single.getSurvival(
-            inchannels=["cohorts", "genes", "genedict", "nicer_survtab"],
-            outchannels=["survivals", "gene_nd"],
-            conda=conda,
-        ),
-        plotSurvival(
-            inchannels=[
-                "survivals",
-                "conditiontab",
-                "plotgenes",
-                "symdict",
-                "numplot",
-                "mpl_backend",
-                "colors",
-                "labels",
-            ],
-            outchannels=[
-                "plotnames",
-                "quadnames",
-                "hcorrnames",
-                "hdistnames",
-                "mdistnames",
-                "images",
-                "plots",
-                "stats",
-                "titles",
-                "notebooks",
-            ],
-            conda=conda,
-            capture=True,
-        ),
-    ]
-
     return introSpect.flowNodes.checkNodeReplacements(
         nodes, default_nodes, replacement_nodes
     )
