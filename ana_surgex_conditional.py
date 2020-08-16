@@ -81,6 +81,8 @@ def enlist_process_nodes(
                 "symdict",
                 "numplot",
                 "mpl_backend",
+                "colors",
+                "labels",
             ],
             outchannels=[
                 "plotnames",
@@ -162,6 +164,7 @@ class plotSurvival(nextflowProcess):
                 "Channel",
                 "from(params.colors)",
                 "toList()",
+                "map{it.join(',')}",
                 "map{it.replaceAll(" + '"#", "\\\\#"' +")}",
                 "set{colors}",
             ],
@@ -169,6 +172,7 @@ class plotSurvival(nextflowProcess):
                 "Channel",
                 "from(params.labels)",
                 "toList()",
+                "map{it.join(',')}",
                 "set{labels}",
             ],
         ]
@@ -179,6 +183,8 @@ class plotSurvival(nextflowProcess):
             "conditiontab": ("each", "conditiontab", "conditiontab", None, True),
             "mpl_backend": ("env", "MPLBACK", None, None, True),
             "plotgenes": ("val", "plotgenes", "genes", None, False),
+            "colors": ("val", "colors", "colors", None, False),
+            "labels": ("val", "labels", "labels", None, False),
             "survivals": (
                 "tuple",
                 (
