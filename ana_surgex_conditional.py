@@ -42,6 +42,8 @@ default_main_kws = {
     "survtab": "None",
     "conditiontab": "None",
     "mutlabel": "p53",
+    "colors": par_examples.quadKMcolors,
+    "labels": par_examples.quadKMlabels,
     "report_title": '"Title of report"',
     "author_name": '"Author"',
     "lab_name": '"Laboratory or PI"',
@@ -110,6 +112,21 @@ def enlist_process_nodes(
             outchannels=["bibtex"],
             conda=conda,
         ),
+        ana_surgex_single.compileReport(
+            inchannels=[
+                "plotsr",
+                "heatmap",
+                "ordered_cohorts",
+                "page_titles",
+                "comments",
+                "bibtex",
+                "report_title",
+                "author_name",
+                "lab_name",
+            ],
+            outchannels=["reportex"],
+            conda=conda,
+        ),
         # ana_surgex_single.pdfFromLatex(),
     ]
 
@@ -157,7 +174,7 @@ class plotSurvival(nextflowProcess):
             "echo": "true",
             "publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
         }
-        
+
     def channel_pretreat(self):
         return [
             [
@@ -165,7 +182,7 @@ class plotSurvival(nextflowProcess):
                 "from(params.colors)",
                 "toList()",
                 "map{it.join(',')}",
-                "map{it.replaceAll(" + '"#", "\\\\#"' +")}",
+                "map{it.replaceAll(" + '"#", "\\\\#"' + ")}",
                 "set{colors}",
             ],
             [
