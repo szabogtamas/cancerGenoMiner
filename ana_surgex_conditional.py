@@ -164,7 +164,7 @@ def enlist_process_nodes(
             ],
             conda=conda,
             capture=True,
-        )
+        ),
     ]
 
     return introSpect.flowNodes.checkNodeReplacements(
@@ -346,6 +346,8 @@ class plotSurvival(nextflowProcess):
         -------
         Kaplan–Meier plot and distributions of gene expression.
         """
+
+        print("!!!", clinicals)
 
         ### Retrieve gene symbols, if available
         if genedict is not None:
