@@ -547,8 +547,11 @@ def plotSurvHazardCat(
 
     ### Plot gene expression and hazard for individual patients
     if kde:
-        ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, alpha=0.4, ax=ax)
-        ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, alpha=0.4, ax=ax)
+        df = df.loc[~pd.isnull(df[featcol])]
+        for k, v in colordict.items():
+            if k != "NaN":
+                tdf = df.loc[~pd.isnull(df[k])]
+                ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
     else:
         ax.scatter(
             df[hazardcol],
@@ -561,10 +564,11 @@ def plotSurvHazardCat(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_ylim(0, 25)
+    ax.set_xlim(0, 1)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if loghazard:
-        ax.set_xscale("log")
+        pass#ax.set_xscale("log")
     if make_legend:
         ax.legend(title="", loc="lower left", frameon=False)
     else:
@@ -572,8 +576,7 @@ def plotSurvHazardCat(
             ax.get_legend().remove()
         except:
             pass
-    return ax
-
+    return df
 
 def curatedSurvival(
     cfn: str,

@@ -353,8 +353,7 @@ class plotSurvival(nextflowProcess):
          ### Plot gene expression as a function of survived hazard
         plt = plotting_tools.plt
         plotting_tools.set_figure_rc()
-        fig, haxs = plt.subplots(plotrow, plotcol)
-        haxs = haxs.flatten()
+        fig, haxs = plt.subplots(1,2)
 
         gN = len(symbols)
         for i in range(gN):
@@ -381,6 +380,7 @@ class plotSurvival(nextflowProcess):
                 make_legend=False,
                 ax=hax,
             )
+            return cg
         hax = plotting_tools.legend_only(
             ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
