@@ -350,42 +350,6 @@ class plotSurvival(nextflowProcess):
         clinicals = survival_tools.calcSurvHazardCat(clinicals, hazardcol="hazard")
         smallclinicals = clinicals.head()
 
-         ### Plot gene expression as a function of survived hazard
-        plt = plotting_tools.plt
-        plotting_tools.set_figure_rc()
-        fig, haxs = plt.subplots(1,2)
-
-        gN = len(symbols)
-        for i in range(gN):
-            gene = genes[i]
-            gene = gene.replace('"', "")
-            symbol = symbols[i]
-            hax = haxs[i]
-            cg = clinicals.loc[
-                clinicals["gex_" + symbol] != "NaN",
-                ["time", "event", "mutation", "gex_" + symbol, "hazard"],
-            ]
-            cg.columns = ["time", "event", "mutation", "gex", "hazard"]
-            if symbol == gene:
-                symbol = ""
-            else:
-                symbol = " (" + symbol + ")"
-            hax = survival_tools.plotSurvHazardCat(
-                cg,
-                hazardcol="hazard",
-                featcol="gex",
-                catcol="mutation",
-                colordict={"WT": colors[4], mutlabel: colors[5]},
-                title=gene + symbol,
-                make_legend=False,
-                ax=hax,
-            )
-            return cg
-        hax = plotting_tools.legend_only(
-            ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
-        )
-        return
-
         ### Reorder table to group gene expression by mutation status and hazard
         df = ["gex_" + symbol for symbol in symbols]
         commoncols = ["sample", "mutation", "hazard"]

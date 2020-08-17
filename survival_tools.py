@@ -551,7 +551,10 @@ def plotSurvHazardCat(
         for k, v in colordict.items():
             if k != "NaN":
                 tdf = df.loc[df[catcol] == k]
-                ax = plotting_tools.sns.kdeplot(tdf[hazardcol], tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
+                if loghazard:
+                    ax = plotting_tools.sns.kdeplot(tdf[hazardcol], tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
+                else:
+                    ax = plotting_tools.sns.kdeplot(np.log2(tdf[hazardcol]), tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
     else:
         ax.scatter(
             df[hazardcol],
@@ -568,7 +571,8 @@ def plotSurvHazardCat(
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if loghazard:
-        pass#ax.set_xscale("log")
+        ax.set_xscale("log", basex=2)
+        ax.set_xlim(0.05, 1)
     if make_legend:
         ax.legend(title="", loc="lower left", frameon=False)
     else:
