@@ -89,7 +89,7 @@ def enlist_process_nodes(
             outchannels=[
                 "plotnames",
                 "quadnames",
-                #"hcorrnames",
+                # "hcorrnames",
                 "hdistnames",
                 "mdistnames",
                 "images",
@@ -220,7 +220,7 @@ class plotSurvival(nextflowProcess):
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
             "plotnames": ("val", '"${plotcohort}_km"', "kmp", None, False),
             "quadnames": ("val", '"${plotcohort}_quad"', "kmq", None, False),
-            #"hcorrnames": ("val", '"${plotcohort}_hcorr"', "hazardcorr", None, False),
+            # "hcorrnames": ("val", '"${plotcohort}_hcorr"', "hazardcorr", None, False),
             "hdistnames": ("val", '"${plotcohort}_hdist"', "hazarddist", None, False),
             "mdistnames": ("val", '"${plotcohort}_mdist"', "mutdist", None, False),
             "images": ("file", '"*.png"', None, None, False),

@@ -97,6 +97,7 @@ def general_report(
         pagetitles = pagetitles["title"]
 
     page_list = []
+    chi = 0
     if cohort_order is None:
         for plots in plot_list:
             if type(plots) is list:
@@ -105,6 +106,7 @@ def general_report(
                 path = plots
             e = os.path.basename(path)
             e = e[:-4]
+            e = e.split("_")[0]
             if e in pagetitles:
                 e = pagetitles[e]
             page_list.append((plots, e))
@@ -210,6 +212,7 @@ def general_report(
     \\thispagestyle{fancy}
 
     \\vspace*{-90pt}
+    \\section*{}
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
@@ -247,8 +250,9 @@ def general_report(
     """
         + "\n".join(
             [
-                "\\newpage\n\\begin{center}"
+                "\\newpage\n\\begin{center}\n\\subsection{"
                 + pagetitle
+                + "}"
                 + "\\end{center}\\vspace*{-30pt}\n"
                 + "\n".join(["\\input{" + plot + "}\n" for plot in plots])
                 + "\\par\n\\vspace*{30pt}\n\\centering\\hyperlink{page.1}{Back to overview table}\n"
