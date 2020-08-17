@@ -550,8 +550,8 @@ def plotSurvHazardCat(
         df = df.loc[~pd.isnull(df[featcol])]
         for k, v in colordict.items():
             if k != "NaN":
-                tdf = df.loc[~pd.isnull(df[k])]
-                ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
+                tdf = df.loc[df[catcol] == k]
+                ax = plotting_tools.sns.kdeplot(tdf[hazardcol], tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
     else:
         ax.scatter(
             df[hazardcol],
