@@ -228,7 +228,7 @@ class plotSurvival(nextflowProcess):
                 "tuple",
                 (
                     '"${plotcohort}_km.pgf"',
-                    '"${plotcohort}_quad.pgf"',
+                    '"${plotcohort}_quad.txt"',
                     #'"${plotcohort}_hcorr.pgf"',
                     '"${plotcohort}_hdist.pgf"',
                     '"${plotcohort}_mdist.pgf"',

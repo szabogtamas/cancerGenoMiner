@@ -970,7 +970,12 @@ class compileReport(nextflowProcess):
                 "collectFile(name: 'titles.txt', newLine: true)",
                 "set{page_titles}",
             ],
-            ["plots", "map{it.join(':')}", "toList()", "set{plotsr}",],
+            [
+                "plots",
+                "map{it.join(':')}",
+                "toList()",
+                "set{plotsr}",
+            ],  # TODO: expand nested list here
             ["cohort_order", "map{it.text}", "set{ordered_cohorts}",],
         ]
 
