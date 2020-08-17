@@ -298,7 +298,7 @@ class plotSurvival(nextflowProcess):
         labels
             Legend labels for the two factors and four conditions.
         colors
-        Line colors to be used.
+            Line colors to be used.
         plotrow
             Number of subplots in a row.
         plotcol
@@ -329,7 +329,7 @@ class plotSurvival(nextflowProcess):
         else:
             titles = cohort + "\t" + cohort
 
-        ### Read the list of sample affected by the condition (mutation)
+        ### Read the list of samples affected by the condition (mutation)
         with open(conditiontab, "r",) as f:
             mutants = f.read().split("\n")
         if mutlabel is not None:
@@ -594,8 +594,8 @@ class plotSurvival(nextflowProcess):
                 s = ""
             gex.text(i, top, s)
 
-        # return ax, fgs[0], hax, pax, gex, [["cohort"] + genes, stats], titles
-        return ax, fgs[0], pax, gex, [["cohort"] + genes, stats], titles
+        # return ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
+        return ax, fgs, pax, gex, [["cohort"] + genes, stats], titles
 
 
 def main():
