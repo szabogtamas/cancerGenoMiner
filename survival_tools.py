@@ -498,6 +498,7 @@ def plotSurvHazardCat(
     title: str = "",
     loghazard: bool = True,
     make_legend: bool = True,
+    kde: bool = True,
     ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
 
@@ -526,6 +527,8 @@ def plotSurvHazardCat(
         If a x axis, showing cumulative hazard should be logarithmic.
     make_legend
         If a legend should be added to the plot.
+    kde
+        If a True, a density estimate will appear instead of dots.
     ax
         The matplotlib axis object for the plot.
 
@@ -543,13 +546,17 @@ def plotSurvHazardCat(
         greyCode = "#dddddd"
 
     ### Plot gene expression and hazard for individual patients
-    ax.scatter(
-        df[hazardcol],
-        df[featcol],
-        s=0.5,
-        c=df[catcol].map(colordict).fillna(greyCode),
-        alpha=0.6,
-    )
+    if kde:
+        ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, alpha=0.4, ax=ax)
+        ax = plotting_tools.sns.kdeplot(df[hazardcol], df[featcol], shade=True, shade_lowest=False, alpha=0.4, ax=ax)
+    else:
+        ax.scatter(
+            df[hazardcol],
+            df[featcol],
+            s=0.5,
+            c=df[catcol].map(colordict).fillna(greyCode),
+            alpha=0.6,
+        )
     ax.set_title(title, y=0.8)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
