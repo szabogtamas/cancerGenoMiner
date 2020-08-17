@@ -212,7 +212,6 @@ def general_report(
     \\thispagestyle{fancy}
 
     \\vspace*{-90pt}
-    \\section*{}
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
@@ -250,7 +249,7 @@ def general_report(
     """
         + "\n".join(
             [
-                "\\newpage\n\\begin{center}\n\\subsection{"
+                "\\newpage\n\\begin{center}\n\\section{"
                 + pagetitle
                 + "}"
                 + "\\end{center}\\vspace*{-30pt}\n"

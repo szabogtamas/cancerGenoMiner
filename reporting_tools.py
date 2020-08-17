@@ -241,7 +241,7 @@ def latex_heatmap(
                     + textPainter(x, bCm)
                     + "} \\cellcolor[rgb]{"
                     + cellPainter(x, rCm)
-                    + "} \\hyperlink{subsection.1."
+                    + "} \\hyperlink{section."
                     + str(plot_extent * i + 1)
                     + "}{"
                     + "{:0.2f}".format(1 * x)
