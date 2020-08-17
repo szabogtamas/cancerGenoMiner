@@ -464,8 +464,6 @@ class plotSurvival(nextflowProcess):
             fgs.append(naxs)
 
         ### Plot gene expression as a function of survived hazard
-        plt = plotting_tools.plt
-        plotting_tools.set_figure_rc()
         fig, haxs = plt.subplots(plotrow, plotcol)
         haxs = haxs.flatten()
 
