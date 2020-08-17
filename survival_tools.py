@@ -552,9 +552,25 @@ def plotSurvHazardCat(
             if k != "NaN":
                 tdf = df.loc[df[catcol] == k]
                 if loghazard:
-                    ax = plotting_tools.sns.kdeplot(tdf[hazardcol], tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
+                    ax = plotting_tools.sns.kdeplot(
+                        tdf[hazardcol],
+                        tdf[featcol],
+                        shade=True,
+                        shade_lowest=False,
+                        color=v,
+                        alpha=0.4,
+                        ax=ax,
+                    )
                 else:
-                    ax = plotting_tools.sns.kdeplot(np.log2(tdf[hazardcol]), tdf[featcol], shade=True, shade_lowest=False, color=v, alpha=0.4, ax=ax)
+                    ax = plotting_tools.sns.kdeplot(
+                        np.log2(tdf[hazardcol]),
+                        tdf[featcol],
+                        shade=True,
+                        shade_lowest=False,
+                        color=v,
+                        alpha=0.4,
+                        ax=ax,
+                    )
     else:
         ax.scatter(
             df[hazardcol],
@@ -581,6 +597,7 @@ def plotSurvHazardCat(
         except:
             pass
     return df
+
 
 def curatedSurvival(
     cfn: str,

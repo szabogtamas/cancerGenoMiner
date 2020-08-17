@@ -117,10 +117,14 @@ def general_report(
                 path = plots
             e = os.path.basename(path)
             e = e[:-4]
-            a = []
-            for b in plots:
-                a.append(os.path.realpath(b))
-            d[e] = a
+            e = e.split("_")[0]
+            if type(plots) is list:
+                a = []
+                for b in plots:
+                    a.append(os.path.realpath(b))
+                d[e] = a
+            else:
+                d[e] = plots
         for cohort in cohort_order:
             if cohort in pagetitles:
                 page_list.append((d[cohort], pagetitles[cohort]))
