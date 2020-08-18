@@ -122,7 +122,12 @@ def general_report(
             e = e.split("_")[0]
             if type(plots) is list:
                 a = []
-                for b in plots:
+                for b in plots: # filter for nested fig lists here
+                    if b[-4:] == ".txt":
+                        with open(b, "r") as f:
+                            for line in f:
+                                print([line])
+                                a.append(os.path.realpath(line))
                     a.append(os.path.realpath(b))
                 d[e] = a
             else:
