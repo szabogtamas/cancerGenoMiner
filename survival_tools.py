@@ -199,7 +199,7 @@ def plotKMpair(
     if calculate_stat:
         s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
         title += "\n(p={:1.6f})".format(s.p_value)
-    ax.set_title(title, y=0.5)
+    ax.set_title(title, y=0.8)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
     ax.spines["top"].set_visible(False)
