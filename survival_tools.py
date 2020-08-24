@@ -137,6 +137,7 @@ def plotKMpair(
     colors: tuple = (None, None),
     xlabel: str = "Overall survival (months)",
     title: str = "",
+    titleheight: float = 0.9,
     calculate_stat: bool = True,
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
@@ -164,6 +165,8 @@ def plotKMpair(
         Label for the x axis.
     title
         Title of the (sub)plot.
+    titleheight
+        Where the subplot title should appear (on y axis).
     calculate_stat
         If a logrank statistic should be calculated.
     make_legend
@@ -199,7 +202,7 @@ def plotKMpair(
     if calculate_stat:
         s = logRankSurvival(T, E, mask, alternative_mask=alternative_mask)
         title += "\n(p={:1.6f})".format(s.p_value)
-    ax.set_title(title, y=0.8)
+    ax.set_title(title, y=titleheight)
     ax.set_xlabel(xlabel)
     ax.set_ylim(0, 1.1)
     ax.spines["top"].set_visible(False)
@@ -226,6 +229,7 @@ def plotKMquads(
     colors: Union[None, Sequence] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
+    titleheight: float = 0.6,
     calculate_stat: bool = True,
     make_legend: bool = True,
     axs: Union[None, plt.Axes] = None,
@@ -258,6 +262,8 @@ def plotKMquads(
         Label for the x axis.
     title
         Title of the (sub)plot.
+    titleheight
+        Where the subplot title should appear (on y axis).
     calculate_stat
         If a logrank statistic should be calculated.
     make_legend
@@ -287,6 +293,7 @@ def plotKMquads(
         labels=labels[4:6],
         xlabel=xlabel,
         title=title,
+        titleheight=titleheight,
         calculate_stat=calculate_stat,
         make_legend=make_legend,
         ax=axs[0],
@@ -300,6 +307,7 @@ def plotKMquads(
         colors=[c1, c2],
         xlabel=xlabel,
         title=title,
+        titleheight=titleheight,
         calculate_stat=calculate_stat,
         make_legend=make_legend,
         ax=axs[1],
@@ -313,6 +321,7 @@ def plotKMquads(
         colors=[c3, c4],
         xlabel=xlabel,
         title=title,
+        titleheight=titleheight,
         calculate_stat=calculate_stat,
         make_legend=make_legend,
         ax=axs[2],
@@ -326,6 +335,7 @@ def plotKMquads(
         colors=[c1, c3],
         xlabel=xlabel,
         title=title,
+        titleheight=titleheight,
         calculate_stat=calculate_stat,
         make_legend=make_legend,
         ax=axs[3],
@@ -339,6 +349,7 @@ def plotKMquads(
         colors=[c2, c4],
         xlabel=xlabel,
         title=title,
+        titleheight=titleheight,
         calculate_stat=calculate_stat,
         make_legend=make_legend,
         ax=axs[4],
