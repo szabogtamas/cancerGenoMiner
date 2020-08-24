@@ -126,7 +126,6 @@ def general_report(
                     if b[-4:] == ".txt":
                         with open(b, "r") as f:
                             for line in f:
-                                print([line])
                                 a.append(os.path.realpath(line))
                     a.append(os.path.realpath(b))
                 d[e] = a
