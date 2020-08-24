@@ -421,7 +421,7 @@ class plotSurvival(nextflowProcess):
         else:
             fN = gN / (plotrow - 1) + 1
         for fi in range(int(fN)):
-            fig, axs = plt.subplots(plotrow, 5)
+            fig, axs = plt.subplots(plotrow, 5, figsize=(7.2, 4.8))
             axs = axs.flatten()
             naxs = []
             has_legendrow = False
@@ -435,12 +435,8 @@ class plotSurvival(nextflowProcess):
                     cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
                     cg = gex_tools.split_by_gex_median(cg, symbol)
                     mask = cg["cat_" + symbol] == "low"
-                    if symbol == gene:
-                        symbol = ""
-                    else:
-                        symbol = " (" + symbol + ")"
                     sax = survival_tools.plotKMquads(
-                        cg, mask, cmask, title=gene + symbol, make_legend=False, axs=sax
+                        cg, mask, cmask, title=gene, make_legend=False, axs=sax
                     )
                     naxs.extend(sax)
                 else:
