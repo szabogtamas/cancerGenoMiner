@@ -229,7 +229,7 @@ def plotKMquads(
     colors: Union[None, Sequence] = par_examples.quadKMcolors,
     xlabel: str = "Overall survival (months)",
     title: str = "",
-    titleheight: float = 0.6,
+    titleheight: float = 0.55,
     calculate_stat: bool = True,
     make_legend: bool = True,
     axs: Union[None, plt.Axes] = None,
