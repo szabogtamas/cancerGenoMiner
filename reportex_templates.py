@@ -127,7 +127,8 @@ def general_report(
                         with open(b, "r") as f:
                             for line in f:
                                 a.append(os.path.realpath(line))
-                    a.append(os.path.realpath(b))
+                    else:
+                        a.append(os.path.realpath(b))
                 d[e] = a
             else:
                 d[e] = plots
