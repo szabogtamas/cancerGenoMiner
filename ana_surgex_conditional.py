@@ -89,7 +89,7 @@ def enlist_process_nodes(
             outchannels=[
                 "plotnames",
                 "quadnames",
-                # "hcorrnames",
+                "hcorrnames",
                 "hdistnames",
                 "mdistnames",
                 "images",
@@ -220,7 +220,7 @@ class plotSurvival(nextflowProcess):
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
             "plotnames": ("val", '"${plotcohort}_km"', "kmp", None, False),
             "quadnames": ("val", '"${plotcohort}_quad"', "kmq", None, False),
-            # "hcorrnames": ("val", '"${plotcohort}_hcorr"', "hazardcorr", None, False),
+            "hcorrnames": ("val", '"${plotcohort}_hcorr.pdf"', "hazardcorr", None, False),
             "hdistnames": ("val", '"${plotcohort}_hdist"', "hazarddist", None, False),
             "mdistnames": ("val", '"${plotcohort}_mdist"', "mutdist", None, False),
             "images": ("file", '"*.png"', None, None, False),
@@ -229,7 +229,7 @@ class plotSurvival(nextflowProcess):
                 (
                     '"${plotcohort}_km.pgf"',
                     '"${plotcohort}_quad.txt"',
-                    #'"${plotcohort}_hcorr.pgf"',
+                    '"${plotcohort}_hcorr.pdf"',
                     '"${plotcohort}_hdist.pgf"',
                     '"${plotcohort}_mdist.pgf"',
                 ),
@@ -251,7 +251,7 @@ class plotSurvival(nextflowProcess):
                         "Kaplan-Meier plots of 4 groups, by 2 dichotomous conditions",
                     ),
                     ("kmq", "Kaplan-Meier plot series with every pairs of conditions"),
-                    # ("hazardcorr", "Correlation of survived hazard with gene expression",),
+                    ("hazardcorr", "Correlation of survived hazard with gene expression",),
                     ("hazarddist", "Distribution of gene expression in risk groups"),
                     ("mutdist", "Distribution of gene expression in WT and mutant"),
                     ("lrt", "Temporary file to store results of log-rank test"),
@@ -456,39 +456,37 @@ class plotSurvival(nextflowProcess):
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
-        if False:  # Overwhelms PGF plotting enginge and rarely informative.
-            ### Plot gene expression as a function of survived hazard
-            fig, haxs = plt.subplots(plotrow, plotcol)
-            haxs = haxs.flatten()
+        fig, haxs = plt.subplots(plotrow, plotcol)
+        haxs = haxs.flatten()
 
-            gN = len(symbols)
-            for i in range(gN):
-                gene = genes[i]
-                gene = gene.replace('"', "")
-                symbol = symbols[i]
-                hax = haxs[i]
-                cg = clinicals.loc[
-                    clinicals["gex_" + symbol] != "NaN",
-                    ["time", "event", "mutation", "gex_" + symbol, "hazard"],
-                ]
-                cg.columns = ["time", "event", "mutation", "gex", "hazard"]
-                if symbol == gene:
-                    symbol = ""
-                else:
-                    symbol = " (" + symbol + ")"
-                hax = survival_tools.plotSurvHazardCat(
-                    cg,
-                    hazardcol="hazard",
-                    featcol="gex",
-                    catcol="mutation",
-                    colordict={"WT": colors[4], mutlabel: colors[5]},
-                    title=gene + symbol,
-                    make_legend=False,
-                    ax=hax,
-                )
-            hax = plotting_tools.legend_only(
-                ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
+        gN = len(symbols)
+        for i in range(gN):
+            gene = genes[i]
+            gene = gene.replace('"', "")
+            symbol = symbols[i]
+            hax = haxs[i]
+            cg = clinicals.loc[
+                clinicals["gex_" + symbol] != "NaN",
+                ["time", "event", "mutation", "gex_" + symbol, "hazard"],
+            ]
+            cg.columns = ["time", "event", "mutation", "gex", "hazard"]
+            if symbol == gene:
+                symbol = ""
+            else:
+                symbol = " (" + symbol + ")"
+            hax = survival_tools.plotSurvHazardCat(
+                cg,
+                hazardcol="hazard",
+                featcol="gex",
+                catcol="mutation",
+                colordict={"WT": colors[4], mutlabel: colors[5]},
+                title=gene + symbol,
+                make_legend=False,
+                ax=hax,
             )
+        hax = plotting_tools.legend_only(
+            ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
+        )
 
         ### Label patients according to hazard: low survived hazard is high risk
         df["risk"] = df["hazard"].apply(lambda x: "high" if x <= 0.25 else "")
@@ -590,8 +588,7 @@ class plotSurvival(nextflowProcess):
                 s = ""
             gex.text(i, top, s)
 
-        # return ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
-        return ax, fgs, pax, gex, [["cohort"] + genes, stats], titles
+        return ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
 
 
 def main():

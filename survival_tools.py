@@ -137,7 +137,7 @@ def plotKMpair(
     colors: tuple = (None, None),
     xlabel: str = "Overall survival (months)",
     title: str = "",
-    titleheight: float = 0.9,
+    titleheight: float = 0.95,
     calculate_stat: bool = True,
     make_legend: bool = True,
     ax: Union[None, plt.Axes] = None,
