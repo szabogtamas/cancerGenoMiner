@@ -490,17 +490,20 @@ class plotSurvival(nextflowProcess):
                 symbol = ""
             else:
                 symbol = " (" + symbol + ")"
-            hax = survival_tools.plotSurvHazardCat(
-                cg,
-                hazardcol="hazard",
-                featcol="gex",
-                catcol="mutation",
-                colordict={"WT": colors[4], mutlabel: colors[5]},
-                title=gene + symbol,
-                make_legend=False,
-                downsample=downsample,
-                ax=hax,
-            )
+            try:
+                hax = survival_tools.plotSurvHazardCat(
+                    cg,
+                    hazardcol="hazard",
+                    featcol="gex",
+                    catcol="mutation",
+                    colordict={"WT": colors[4], mutlabel: colors[5]},
+                    title=gene + symbol,
+                    make_legend=False,
+                    downsample=downsample,
+                    ax=hax,
+                )
+            except:
+                pass
         hax = plotting_tools.legend_only(
             ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
         )
