@@ -447,9 +447,12 @@ class plotSurvival(nextflowProcess):
                     cg = clinicals.loc[clinicals["gex_" + symbol] != "NaN", :]
                     cg = gex_tools.split_by_gex_median(cg, symbol)
                     mask = cg["cat_" + symbol] == "low"
-                    sax = survival_tools.plotKMquads(
-                        cg, mask, cmask, title=gene, make_legend=False, axs=sax
-                    )
+                    try:
+                        sax = survival_tools.plotKMquads(
+                            cg, mask, cmask, title=gene, make_legend=False, axs=sax
+                        )
+                    except:
+                        pass
                     naxs.extend(sax)
                 else:
                     if has_legendrow:
