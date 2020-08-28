@@ -590,13 +590,22 @@ def plotSurvHazardCat(
                         ax=ax,
                     )
     else:
-        ax.scatter(
-            df[hazardcol],
-            df[featcol],
-            s=0.5,
-            c=df[catcol].map(colordict).fillna(greyCode),
-            alpha=0.6,
-        )
+        if loghazard:
+            ax.scatter(
+                np.log2(df[hazardcol]),
+                df[featcol],
+                s=0.5,
+                c=df[catcol].map(colordict).fillna(greyCode),
+                alpha=0.6,
+            )
+        else:
+            ax.scatter(
+                df[hazardcol],
+                df[featcol],
+                s=0.5,
+                c=df[catcol].map(colordict).fillna(greyCode),
+                alpha=0.6,
+            )
     ax.set_title(title, y=0.8)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
