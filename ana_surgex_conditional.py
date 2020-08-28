@@ -284,7 +284,7 @@ class plotSurvival(nextflowProcess):
         colors: list = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
-        ownsample: Union[None, float] = 0.1,
+        downsample: Union[None, float] = 0.1,
     ) -> Tuple[
         plotting_tools.plt.Axes, list, gex_tools.pd.DataFrame, plotting_tools.plt.Axes
     ]:
