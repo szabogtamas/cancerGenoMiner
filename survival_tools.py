@@ -509,12 +509,13 @@ def plotSurvHazardCat(
     title: str = "",
     loghazard: bool = True,
     make_legend: bool = True,
-    kde: bool = True,
+    kde: bool = False,
+    downsample: Union[None, float] = None,
     ax: Union[None, plt.Axes] = None,
 ) -> plt.Axes:
 
     """
-    Plots four Kaplan-Meier curves to compare survival in influenced by two factors.
+    Plots survived hazard by gene expression.
 
     Parameters
     ----------
@@ -540,12 +541,14 @@ def plotSurvHazardCat(
         If a legend should be added to the plot.
     kde
         If a True, a density estimate will appear instead of dots.
+    downsample
+        The fraction of the sample to return when downsampling. No downsampling if ´None´.
     ax
         The matplotlib axis object for the plot.
 
     Returns
     -------
-    The matplotlib axis object with the Kaplan-Meier curves.
+    The matplotlib axis object with KDE or scatter plots.
     """
 
     ### Create axis and set missing color value if not defined explicitely
@@ -556,9 +559,13 @@ def plotSurvHazardCat(
     else:
         greyCode = "#dddddd"
 
+    ### Scatter plots typically contain too many points, so enable downsampling
+    df = df.loc[~pd.isnull(df[featcol])]
+    if downsample is not None:
+        df = df.sample(frac=downsample)
+
     ### Plot gene expression and hazard for individual patients
     if kde:
-        df = df.loc[~pd.isnull(df[featcol])]
         for k, v in colordict.items():
             if k != "NaN":
                 tdf = df.loc[df[catcol] == k]

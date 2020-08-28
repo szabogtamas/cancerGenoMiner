@@ -275,6 +275,7 @@ class plotSurvival(nextflowProcess):
         colors: list = par_examples.quadKMcolors,
         plotrow: int = 5,
         plotcol: int = 4,
+        ownsample: Union[None, float] = 0.1,
     ) -> Tuple[
         plotting_tools.plt.Axes, list, gex_tools.pd.DataFrame, plotting_tools.plt.Axes
     ]:
@@ -303,6 +304,8 @@ class plotSurvival(nextflowProcess):
             Number of subplots in a row.
         plotcol
             Number of subplots in a column.
+        downsample
+            The fraction of the sample to return when downsampling. No downsampling if ´None´.
         
         Returns
         -------
@@ -459,6 +462,7 @@ class plotSurvival(nextflowProcess):
         fig, haxs = plt.subplots(plotrow, plotcol)
         haxs = haxs.flatten()
 
+        # Plot a scatter-like plot for survived hazard and gene expression. Use downsampling to prevent pdf engine overflow
         gN = len(symbols)
         for i in range(gN):
             gene = genes[i]
@@ -482,6 +486,7 @@ class plotSurvival(nextflowProcess):
                 colordict={"WT": colors[4], mutlabel: colors[5]},
                 title=gene + symbol,
                 make_legend=False,
+                downsample=downsample,
                 ax=hax,
             )
         hax = plotting_tools.legend_only(
