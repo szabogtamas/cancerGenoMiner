@@ -220,13 +220,7 @@ class plotSurvival(nextflowProcess):
             "stats": ("file", '"${plotcohort}_stats.csv"', "lrt", None, False),
             "plotnames": ("val", '"${plotcohort}_km"', "kmp", None, False),
             "quadnames": ("val", '"${plotcohort}_quad"', "kmq", None, False),
-            "hcorrnames": (
-                "val",
-                '"${plotcohort}_hcorr.pdf"',
-                "hazardcorr",
-                None,
-                False,
-            ),
+            "hcorrnames": ("val", '"${plotcohort}_hcorr"', "hazardcorr", None, False,),
             "hdistnames": ("val", '"${plotcohort}_hdist"', "hazarddist", None, False),
             "mdistnames": ("val", '"${plotcohort}_mdist"', "mutdist", None, False),
             "images": ("file", '"*.png"', None, None, False),
@@ -235,7 +229,7 @@ class plotSurvival(nextflowProcess):
                 (
                     '"${plotcohort}_km.pgf"',
                     '"${plotcohort}_quad.txt"',
-                    '"${plotcohort}_hcorr.pdf"',
+                    '"${plotcohort}_hcorr.pgf"',
                     '"${plotcohort}_hdist.pgf"',
                     '"${plotcohort}_mdist.pgf"',
                 ),
