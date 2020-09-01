@@ -586,6 +586,7 @@ class plotSurvival(nextflowProcess):
         genedict: Union[None, str] = None,
         plotrow: int = 5,
         plotcol: int = 4,
+        titleheight: float = 0.55,
     ) -> Tuple[
         plotting_tools.plt.Axes, list, gex_tools.pd.DataFrame, plotting_tools.plt.Axes
     ]:
@@ -608,6 +609,8 @@ class plotSurvival(nextflowProcess):
             Number of subplots in a row.
         plotcol
             Number of subplots in a column.
+        titleheight
+            Where the subplot title should appear (on y axis).
         
         Returns
         -------
@@ -659,7 +662,7 @@ class plotSurvival(nextflowProcess):
                 symbol = " (" + symbol + ")"
             try:
                 survival_tools.plotKMpair(
-                    cg, mask, title=gene + symbol, ax=ax, make_legend=False
+                    cg, mask, title=gene + symbol, ax=ax, make_legend=False, titleheight=titleheight
                 )
                 stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
                 stats.append(-1 * np.log10(stat.p_value))
