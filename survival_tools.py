@@ -509,6 +509,7 @@ def plotSurvHazardCat(
     title: str = "",
     loghazard: bool = True,
     make_legend: bool = True,
+    scatter: bool = False,
     kde: bool = False,
     downsample: Union[None, float] = None,
     ax: Union[None, plt.Axes] = None,
@@ -539,6 +540,8 @@ def plotSurvHazardCat(
         If a x axis, showing cumulative hazard should be logarithmic.
     make_legend
         If a legend should be added to the plot.
+    scatter
+        If a True, a a scatter plot will also be included on the plot.
     kde
         If a True, a density estimate will appear instead of dots.
     downsample
@@ -559,10 +562,33 @@ def plotSurvHazardCat(
     else:
         greyCode = "#dddddd"
 
-    ### Scatter plots typically contain too many points, so enable downsampling
+    ### Calculate and plot regression line
     df = df.loc[~pd.isnull(df[featcol])]
-    if downsample is not None:
-        df = df.sample(frac=downsample)
+    for k, v in colordict.items():
+        if k != "NaN":
+            tdf = df.loc[df[catcol] == k]
+            if loghazard:
+                ax = plotting_tools.sns.regplot(
+                    tdf[hazardcol],
+                    tdf[featcol],
+                    scatter=False,
+                    color=v,
+                    ax=ax,
+                )
+            else:
+                ax = plotting_tools.sns.regplot(
+                    np.log2(tdf[hazardcol]),
+                    tdf[featcol],
+                    scatter=False,
+                    color=v,
+                    ax=ax,
+                )
+
+
+    ### Scatter plots typically contain too many points, so enable downsampling
+    if kde or scatter:
+        if downsample is not None:
+            df = df.sample(frac=downsample)
 
     ### Plot gene expression and hazard for individual patients
     if kde:
@@ -589,7 +615,7 @@ def plotSurvHazardCat(
                         alpha=0.4,
                         ax=ax,
                     )
-    else:
+    if scatter:
         if loghazard:
             ax.scatter(
                 np.log2(df[hazardcol]),
