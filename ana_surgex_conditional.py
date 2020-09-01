@@ -465,10 +465,9 @@ class plotSurvival(nextflowProcess):
                 sax = plotting_tools.make_kmquad_legendrow(sax, labels, colors)
             fgs.append(naxs)
 
+        ### Plot a scatter-like plot for survived hazard and gene expression. Use downsampling to prevent pdf engine overflow
         fig, haxs = plt.subplots(plotrow, plotcol)
         haxs = haxs.flatten()
-
-        # Plot a scatter-like plot for survived hazard and gene expression. Use downsampling to prevent pdf engine overflow
         gN = len(symbols)
         for i in range(gN):
             gene = genes[i]

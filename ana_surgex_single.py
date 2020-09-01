@@ -662,7 +662,12 @@ class plotSurvival(nextflowProcess):
                 symbol = " (" + symbol + ")"
             try:
                 survival_tools.plotKMpair(
-                    cg, mask, title=gene + symbol, ax=ax, make_legend=False, titleheight=titleheight
+                    cg,
+                    mask,
+                    title=gene + symbol,
+                    ax=ax,
+                    make_legend=False,
+                    titleheight=titleheight,
                 )
                 stat = survival_tools.logRankSurvival(cg["time"], cg["event"], mask)
                 stats.append(-1 * np.log10(stat.p_value))

@@ -507,7 +507,7 @@ def plotSurvHazardCat(
     xlabel: str = "Survived hazard",
     ylabel: str = "FPKM-UQ",
     title: str = "",
-    loghazard: bool = True,
+    loghazard: bool = False,
     make_legend: bool = True,
     scatter: bool = False,
     kde: bool = False,
@@ -568,22 +568,24 @@ def plotSurvHazardCat(
         if k != "NaN":
             tdf = df.loc[df[catcol] == k]
             if loghazard:
+                tdf = tdf.loc[tdf[hazardcol] != 0]
                 ax = plotting_tools.sns.regplot(
-                    tdf[hazardcol],
+                    np.log2(tdf[hazardcol]),
                     tdf[featcol],
                     scatter=False,
+                    line_kws={"lw": 1, "ls": ":"},
                     color=v,
                     ax=ax,
                 )
             else:
                 ax = plotting_tools.sns.regplot(
-                    np.log2(tdf[hazardcol]),
+                    tdf[hazardcol],
                     tdf[featcol],
                     scatter=False,
+                    line_kws={"lw": 1, "ls": ":"},
                     color=v,
                     ax=ax,
                 )
-
 
     ### Scatter plots typically contain too many points, so enable downsampling
     if kde or scatter:
@@ -596,16 +598,7 @@ def plotSurvHazardCat(
             if k != "NaN":
                 tdf = df.loc[df[catcol] == k]
                 if loghazard:
-                    ax = plotting_tools.sns.kdeplot(
-                        tdf[hazardcol],
-                        tdf[featcol],
-                        shade=True,
-                        shade_lowest=False,
-                        color=v,
-                        alpha=0.4,
-                        ax=ax,
-                    )
-                else:
+                    tdf = tdf.loc[tdf[hazardcol] != 0]
                     ax = plotting_tools.sns.kdeplot(
                         np.log2(tdf[hazardcol]),
                         tdf[featcol],
@@ -615,13 +608,24 @@ def plotSurvHazardCat(
                         alpha=0.4,
                         ax=ax,
                     )
+                else:
+                    ax = plotting_tools.sns.kdeplot(
+                        tdf[hazardcol],
+                        tdf[featcol],
+                        shade=True,
+                        shade_lowest=False,
+                        color=v,
+                        alpha=0.4,
+                        ax=ax,
+                    )
     if scatter:
         if loghazard:
+            tdf = df.loc[df[hazardcol] != 0]
             ax.scatter(
-                np.log2(df[hazardcol]),
-                df[featcol],
+                np.log2(tdf[hazardcol]),
+                tdf[featcol],
                 s=0.5,
-                c=df[catcol].map(colordict).fillna(greyCode),
+                c=tdf[catcol].map(colordict).fillna(greyCode),
                 alpha=0.6,
             )
         else:
