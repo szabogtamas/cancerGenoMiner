@@ -147,6 +147,8 @@ def general_report(
     \\usepackage[a4paper, total={7.5in, 10in}]{geometry}
     \\usepackage[utf8]{inputenc}
     \\usepackage{pgfplots}
+    \\usepgfplotslibrary{external} 
+    \\tikzexternalize
     \\usepackage{hyperref}
     \\usepackage{colortbl}
     \\usepackage{subcaption}
