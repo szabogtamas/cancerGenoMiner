@@ -171,7 +171,6 @@ class plotSurvival(nextflowProcess):
 
     def directives(self):
         return {
-            "echo": "true",
             "publishDir": "'../notebooks', mode: 'copy'" + ', pattern: "*.md"',
         }
 
