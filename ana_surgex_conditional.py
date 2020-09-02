@@ -127,7 +127,7 @@ def enlist_process_nodes(
             outchannels=["reportex"],
             conda=conda,
         ),
-        ana_surgex_single.pdfFromLatex(),
+        pdfFromLatex(),
     ]
 
     return introSpect.flowNodes.checkNodeReplacements(
@@ -602,6 +602,32 @@ class plotSurvival(nextflowProcess):
             gex.text(i, top, s)
 
         return ax, fgs, hax, pax, gex, [["cohort"] + genes, stats], titles
+
+
+class pdfFromLatex(nextflowProcess):
+    """
+    Nextflow process to execute the function below.
+    """
+
+    def directives(self):
+        return {
+            "publishDir": "'../', mode: 'copy'",
+        }
+
+    def customize_features(self):
+        self.manualDoc = "Convert the LaTeX format report into pdf.\n"
+        self.inputs = ["file reportex"]
+        self.outputs = ['file("*.pdf")']
+        self.command = "lualatex -shell-escape -halt-on-error -file-line-error -interaction nonstopmode $reportex\n            "
+        self.command += "biber ${reportex.baseName}\n            "
+        self.command += "lualatex -shell-escape -halt-on-error -file-line-error -interaction nonstopmode $reportex\n"
+
+        self.container = environment_definiton.latex_container
+
+        return None
+
+    def compile_command(self):
+        return self.command
 
 
 def main():
