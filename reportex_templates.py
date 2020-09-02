@@ -22,6 +22,7 @@ def general_report(
     report_title: str = "Report",
     author_name: str = "Author",
     lab_name: str = "Lab",
+    title_skip: int = 1,
     heat_table: Union[None, str] = None,
     left_tree: str = "",
     bottom_tree: str = "",
@@ -54,6 +55,8 @@ def general_report(
         Name of the author.
     lab_name
         Name of the lab.
+    title_skip
+        Rows to shift up the title.
     page_title
         A table providing alternative (to cohort name) titles for the plot pages.
     cohort_order
@@ -191,7 +194,9 @@ def general_report(
     \\def\@maketitle{%
     \\newpage
     \\null
-    \\vskip -1em%
+    \\vskip -"""
+        + str(title_skip)
+        + """em%
     \\begin{center}%
     \\let \\footnote \\thanks
         {\\LARGE \@title \\par}%

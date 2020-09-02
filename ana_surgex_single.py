@@ -978,12 +978,7 @@ class compileReport(nextflowProcess):
                 "collectFile(name: 'titles.txt', newLine: true)",
                 "set{page_titles}",
             ],
-            [
-                "plots",
-                "map{it.join(':')}",
-                "toList()",
-                "set{plotsr}",
-            ],  # TODO: expand nested list here
+            ["plots", "map{it.join(':')}", "toList()", "set{plotsr}",],
             ["cohort_order", "map{it.text}", "set{ordered_cohorts}",],
         ]
 
@@ -1014,6 +1009,7 @@ class compileReport(nextflowProcess):
         report_title: str = "Report",
         author_name: str = "Author",
         lab_name: str = "Lab",
+        title_skip: int = 1,
         pagetitles: Union[None, str] = None,
         cohort_order: Union[None, list] = None,
         method_comments: Union[None, str] = None,
@@ -1038,6 +1034,8 @@ class compileReport(nextflowProcess):
             Name of the author.
         lab_name
             Name of the lab.
+        title_skip
+            Rows to shift up the title.
         page_title
             A table providing alternative (to cohort name) titles for the plot pages.
         cohort_order
@@ -1073,6 +1071,7 @@ class compileReport(nextflowProcess):
             report_title=report_title,
             author_name=author_name,
             lab_name=lab_name,
+            title_skip=title_skip,
             heat_table=textable,
             left_tree=left,
             bottom_tree=bottom,
