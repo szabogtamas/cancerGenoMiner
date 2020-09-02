@@ -1099,8 +1099,8 @@ class pdfFromLatex(nextflowProcess):
         self.manualDoc = "Convert the LaTeX format report into pdf.\n"
         self.inputs = ["file reportex"]
         self.outputs = ['file("*.pdf")']
-        self.command = "pdflatex  --enable-write18 --extra-mem-bot=10000000 --synctex=1 -shell-escape -halt-on-error -file-line-error -interaction nonstopmode $reportex\n            "
-        self.command += "biber ${reportex.baseName}\n            "
+        self.command = "pdflatex  --enable-write18 --extra-mem-top=10000000 --extra-mem-bot=10000000 --synctex=1 -shell-escape -halt-on-error -file-line-error -interaction nonstopmode $reportex\n            "
+        #self.command += "biber ${reportex.baseName}\n            "
         #self.command += "pdflatex -shell-escape -interaction nonstopmode -halt-on-error -file-line-error $reportex\n"
 
         self.container = environment_definiton.latex_container
