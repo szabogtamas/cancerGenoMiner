@@ -194,9 +194,7 @@ def general_report(
     \\def\@maketitle{%
     \\newpage
     \\null
-    \\vskip -"""
-        + str(title_skip)
-        + """em%
+    \\vskip -1em%
     \\begin{center}%
     \\let \\footnote \\thanks
         {\\LARGE \@title \\par}%
@@ -223,7 +221,7 @@ def general_report(
     \\maketitle
     \\thispagestyle{fancy}
 
-    \\vspace*{-90pt}
+    \\vspace*{"""+str(-1*(60+title_skip*30))+"""pt}
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
@@ -243,7 +241,7 @@ def general_report(
     
     \\end{subtable}
     \\begin{subtable}{\\textwidth}
-        \\vspace*{-110pt}
+        \\vspace*{"""+str(-1*(70+title_skip*30))+"""pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
         + """}
