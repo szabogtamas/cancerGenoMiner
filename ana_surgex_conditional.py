@@ -466,7 +466,7 @@ class plotSurvival(nextflowProcess):
             fgs.append(naxs)
 
         ### Plot a scatter-like plot for survived hazard and gene expression. Use downsampling to prevent pdf engine overflow
-        fig, haxs = plt.subplots(plotrow, plotcol)
+        fig, haxs = plt.subplots(plotrow, plotcol, figsize=(7.2, 4.8))
         haxs = haxs.flatten()
         gN = len(symbols)
         for i in range(gN):
