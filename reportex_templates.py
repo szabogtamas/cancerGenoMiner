@@ -221,7 +221,9 @@ def general_report(
     \\maketitle
     \\thispagestyle{fancy}
 
-    \\vspace*{"""+str(-1*(60+title_skip*30))+"""pt}
+    \\vspace*{"""
+        + str(-1 * (60 + title_skip * 30))
+        + """pt}
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
@@ -241,7 +243,9 @@ def general_report(
     
     \\end{subtable}
     \\begin{subtable}{\\textwidth}
-        \\vspace*{"""+str(-1*(70+title_skip*30))+"""pt}
+        \\vspace*{"""
+        + str(-1 * (70 + title_skip * 30))
+        + """pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
         + """}
