@@ -227,7 +227,7 @@ def general_report(
     \\begin{table}[!ht]
     \\begin{subtable}{0.1\\textwidth}
         \\begin{flushright}
-            \\vspace*{50pt}
+            \\vspace*{30pt}
             \\hspace*{20pt}
             \\input{"""
         + left_tree
@@ -244,7 +244,7 @@ def general_report(
     \\end{subtable}
     \\begin{subtable}{\\textwidth}
         \\vspace*{"""
-        + str(-1 * (90 + title_skip * 30))
+        + str(-1 * (60 + title_skip * 30))
         + """pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
