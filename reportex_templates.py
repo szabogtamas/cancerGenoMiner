@@ -244,7 +244,7 @@ def general_report(
     \\end{subtable}
     \\begin{subtable}{\\textwidth}
         \\vspace*{"""
-        + str(-1 * (70 + title_skip * 30))
+        + str(-1 * (90 + title_skip * 30))
         + """pt}
         \\hspace*{45pt}\\input{"""
         + bottom_tree
