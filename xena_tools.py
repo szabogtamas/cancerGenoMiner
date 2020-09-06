@@ -293,6 +293,7 @@ def fix_phenotype_factorlevels(
         if i not in leveldict:
             leveldict[i] = e
     clinicals[targetcol] = clinicals[targetcol].map(leveldict)
+    clinicals[targetcol] = clinicals[targetcol].map(renamedict)
     return clinicals
 
 
