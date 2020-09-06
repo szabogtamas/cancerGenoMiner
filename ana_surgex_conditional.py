@@ -340,14 +340,16 @@ class plotSurvival(nextflowProcess):
         if mutlabel not in ["None", None]:
             labels[2] = mutlabel + " " + labels[4]
             labels[3] = mutlabel + " " + labels[5]
+            wtlabel = "WT"
         else:
-            mutlabel = None
+            mutlabel = labels[3].split(labels[5])[0].strip()
+            wtlabel = labels[1].split(labels[5])[0].strip()
 
         ### Read the prefetched data table, add patient info
         clinicals = gex_tools.pd.read_csv(clinicals, sep="\t")
         cmask = clinicals["sample"].isin(mutants)
         clinicals["mutation"] = clinicals["sample"].apply(
-            lambda x: mutlabel if x in mutants else "WT"
+            lambda x: mutlabel if x in mutants else wtlabel
         )
         clinicals = survival_tools.calcSurvHazardCat(clinicals, hazardcol="hazard")
         smallclinicals = clinicals.head()
@@ -488,7 +490,7 @@ class plotSurvival(nextflowProcess):
                     hazardcol="hazard",
                     featcol="gex",
                     catcol="mutation",
-                    colordict={"WT": colors[4], mutlabel: colors[5]},
+                    colordict={wtlabel: colors[4], mutlabel: colors[5]},
                     title=gene + symbol,
                     make_legend=False,
                     downsample=downsample,
@@ -497,7 +499,7 @@ class plotSurvival(nextflowProcess):
             except:
                 pass
         hax = plotting_tools.legend_only(
-            ax=haxs[-1], labels=["WT", mutlabel], colors=colors[4:6]
+            ax=haxs[-1], labels=[wtlabel, mutlabel], colors=colors[4:6]
         )
 
         ### Label patients according to hazard: low survived hazard is high risk
@@ -559,12 +561,12 @@ class plotSurvival(nextflowProcess):
             x="gene",
             y="gex",
             hue="mutation",
-            hue_order=["WT", mutlabel],
+            hue_order=[wtlabel, mutlabel],
             data=df,
             linewidth=0.2,
             ax=gex,
         )
-        pg1 = gex.scatter(0, 0, s=1, label="WT")
+        pg1 = gex.scatter(0, 0, s=1, label=wtlabel)
         pg2 = gex.scatter(0, 0, s=1, label=mutlabel)
         gex.scatter(0, 0, color="white", s=1)
         gex.legend(handles=[pg1, pg2], loc="lower right")
@@ -582,7 +584,7 @@ class plotSurvival(nextflowProcess):
         for i, symbol in enumerate(symbols):
             t, p = scipy.stats.ttest_ind(
                 df.loc[
-                    (df["mutation"] == "WT") & (df["gene"] == symbol), "gex"
+                    (df["mutation"] == wtlabel) & (df["gene"] == symbol), "gex"
                 ].tolist(),
                 df.loc[
                     (df["mutation"] == mutlabel) & (df["gene"] == symbol), "gex"
