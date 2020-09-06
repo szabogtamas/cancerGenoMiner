@@ -337,7 +337,7 @@ class plotSurvival(nextflowProcess):
         ### Read the list of samples affected by the condition (mutation)
         with open(conditiontab, "r",) as f:
             mutants = f.read().split("\n")
-        if mutlabel is not None:
+        if mutlabel not in ["None", None]:
             labels[2] = mutlabel + " " + labels[4]
             labels[3] = mutlabel + " " + labels[5]
         else:
