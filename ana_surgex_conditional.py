@@ -576,7 +576,7 @@ class plotSurvival(nextflowProcess):
         gex.set_xlabel("")
         gex.set_ylabel("Gene expression (FPKM-UQ)", fontsize=9)
         gex.set_title(
-            "Gene expression subset by mutation status\n(" + mutlabel + ")", fontsize=9,
+            "Gene expression subset by condition\n(" + mutlabel + ")", fontsize=9,
         )
 
         bottom, top = gex.get_ylim()
